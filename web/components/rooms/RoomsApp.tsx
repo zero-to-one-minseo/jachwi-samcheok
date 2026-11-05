@@ -63,7 +63,7 @@ export default function RoomsApp({ data }: { data: RoomsData }) {
       </section>
 
       <aside ref={panel} className="flex flex-col border-line bg-surface md:min-h-0 md:w-[420px] md:shrink-0 md:border-l">
-        <Summary count={rooms.length} studentMid={studentMid} base={base} resetable={filterCount(filters, top) > 0}
+        <Summary count={rooms.length} studentMid={studentMid} base={base} survey={showSurvey} resetable={filterCount(filters, top) > 0}
           onReset={() => { setFilters(emptyFilters(top)); setSelectedId(null); }} />
         <div className="flex-1 md:min-h-0 md:overflow-y-auto">
           {selected ? (
@@ -78,18 +78,18 @@ export default function RoomsApp({ data }: { data: RoomsData }) {
   );
 }
 
-function Summary({ count, studentMid, base, resetable, onReset }: {
+function Summary({ count, studentMid, base, survey, resetable, onReset }: {
   count: number;
+  survey: boolean;
   studentMid: number | null;
   base: ReturnType<typeof baselineSummary>;
   resetable: boolean;
   onReset: () => void;
 }) {
   const max = Math.max(studentMid ?? 0, base?.monthly ?? 0, 1);
-  const bars = [
-    { label: "직접 조사", value: studentMid, color: "bg-sea" },
-    { label: "국토부 실거래", value: base?.monthly ?? null, color: "bg-line-strong" },
-  ];
+  const surveyBar = { label: "직접 조사", value: studentMid, color: survey ? "bg-sea" : "bg-line-strong" };
+  const molitBar = { label: "국토부 실거래", value: base?.monthly ?? null, color: survey ? "bg-line-strong" : "bg-sea" };
+  const bars = survey ? [surveyBar, molitBar] : [molitBar, surveyBar];
   return (
     <div className="border-b border-line px-5 pb-4 pt-5">
       <div className="flex items-baseline justify-between">
