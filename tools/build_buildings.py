@@ -4,7 +4,9 @@
 
 1) 도로명주소 검색 API: 길 이름 → 그 길의 건물 목록(도로명주소, 지번, 건물 이름)
 2) 건축HUB 건축물대장 표제부 API: 지번 → 주용도, 사용승인일, 연면적, 층수, 가구·세대 수
-3) 단독다가구 거래는 번지가 가려져 있어 (길, 준공 연도)로 건물 후보를 고른다. 후보가 하나면 그 건물로 '추정'한다.
+3) 연립다세대·오피스텔 거래는 번지가 그대로 나와 그 번지의 건물로 정한다.
+   단독다가구 거래는 번지가 가려져 있어 길·준공 연도(±1)·번지 앞자리로 후보를 고르고, 거래 종류와 대장 용도,
+   2가구 이상, 연면적÷가구 수, 층별개요의 한 칸 크기, 같은 준공 연도 순으로 좁힌다. 후보가 하나면 그 건물로 '추정'한다.
 
 받은 응답은 data/raw/buildings_cache.json에 모아 두어 다시 돌릴 때 API를 또 부르지 않는다.
 만드는 파일: data/buildings.csv(건물 목록), web/api/_engine/data/buildings.json(챗봇 비교용)
@@ -44,6 +46,8 @@ YEAR_TOL = 1
 UNIT_AREA_TOL = 0.35
 FLOOR_UNIT_TOL = 0.2
 MIN_PUBLIC_DEALS = 3
+HOW = {"jibun": "번지 그대로(연립다세대·오피스텔)", "road": "길·연도·번지 앞자리", "type": "거래 종류와 대장 용도",
+       "households": "2가구 이상", "size": "연면적÷가구 수", "floor": "층별개요", "year": "같은 준공 연도"}
 
 
 def keys() -> dict[str, str]:
@@ -91,14 +95,13 @@ def base_road(road: str) -> str:
     return re.sub(r"\s+\d[\d-]*$", "", road or "").strip()
 
 
-def main() -> int:
-    k = keys()
+def load(k: dict[str, str]) -> tuple[list[dict], dict, dict[str, dict], list[dict]]:
     rows = read_molit()
     roads = sorted({base_road(r["road"]) for r in rows if r["roomlike"] == "1" and r["dong"] in CITY_DONGS and r["road"]})
     cache = json.loads(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else {"roads": {}, "titles": {}}
 
     todo = [r for r in roads if r not in cache["roads"]]
-    with ThreadPoolExecutor(4) as ex:
+    with ThreadPoolExecutor(3) as ex:
         for road, items in zip(todo, ex.map(lambda r: road_buildings(r, k["juso"]), todo)):
             cache["roads"][road] = [{f: i.get(f, "") for f in ("roadAddrPart1", "bdNm", "admCd", "mtYn", "lnbrMnnm", "lnbrSlno", "emdNm")}
                                     for i in items]
@@ -122,42 +125,87 @@ def main() -> int:
         for t in cache["titles"].get(j, []):
             purpose = t.get("mainPurpsCdNm") or ""
             year = str(t.get("useAprDay") or "")[:4]
-            if not any(h in purpose for h in HOUSING) or not year.isdigit():
+            # 오피스텔은 대장 주용도가 '업무시설'이고 가구·세대 수 대신 호수만 적힌다. 이름에 '오피스텔'이 있는 것만 넣는다.
+            officetel = purpose == "업무시설" and "오피스텔" in (t.get("bldNm") or "")
+            if not (any(h in purpose for h in HOUSING) or officetel) or not year.isdigit():
                 continue
             name = (t.get("bldNm") or "").strip() or a["bdNm"]
+            households = (t.get("fmlyCnt") or 0) + (t.get("hhldCnt") or 0) or (t.get("hoCnt") or 0 if officetel else 0)
             buildings.append({"id": f"b{len(buildings) + 1:04d}", "road": a["road"], "address": a["roadAddrPart1"],
-                              "name": name, "dong": a["emdNm"], "purpose": purpose, "built": int(year),
-                              "floors": t.get("grndFlrCnt"), "households": (t.get("fmlyCnt") or 0) + (t.get("hhldCnt") or 0),
+                              "name": name, "dong": a["emdNm"], "purpose": "오피스텔" if officetel else purpose,
+                              "built": int(year), "floors": t.get("grndFlrCnt"), "households": households,
                               "area_total": t.get("totArea"), "jibun": f"{a['lnbrMnnm']}-{a['lnbrSlno']}", "jkey": j})
+    return rows, cache, addrs, buildings
 
+
+def full_jibun(r: dict) -> str | None:
+    """연립다세대·오피스텔 거래는 번지가 그대로 나온다('8-3', '197'). 가려진 번지('2**')면 None."""
+    jb = r["jibun"].strip()
+    if re.fullmatch(r"\d+(-\d+)?", jb):
+        return jb if "-" in jb else f"{jb}-0"
+    return None
+
+
+def road_candidates(r: dict, by_road_year: dict[tuple[str, int], list[dict]]) -> list[tuple[list[dict], str]]:
+    """번지가 가려진 거래의 후보를 단서마다 좁혀 간 단계 목록 [(남은 후보, 단서 이름)]."""
+    y = int(r["built_year"])
+    cands = [b for d in range(-YEAR_TOL, YEAR_TOL + 1) for b in by_road_year.get((base_road(r["road"]), y + d), [])]
+    # 국토부는 단독다가구 번지를 '2**'처럼 앞자리와 자릿수만 남기고 가린다. 같은 동·같은 모양의 본번만 남긴다.
+    mask = r["jibun"].strip()
+    if re.fullmatch(r"\d?\*+", mask):
+        pattern = re.compile("^" + mask.replace("*", r"\d") + "$")
+        cands = [b for b in cands if b["dong"] == r["dong"] and pattern.match(b["jibun"].split("-")[0])]
+    steps = [(cands, "road")]
+    # 국토부는 대장 용도로 거래 종류를 나눈다. 단독다가구 거래는 공동주택(다세대·연립)이나 오피스텔에 있을 수 없다.
+    if len(cands) > 1 and r["type"] == "단독다가구":
+        house = [b for b in cands if b["purpose"] not in ("공동주택", "오피스텔")]
+        if house and len(house) < len(cands):
+            cands = house
+            steps.append((cands, "type"))
+    if len(cands) > 1 and any((b["households"] or 0) >= 2 for b in cands):
+        cands = [b for b in cands if (b["households"] or 0) >= 2]
+        steps.append((cands, "households"))
+    area = float(r["area_m2"]) if r["area_m2"] else None
+    if len(cands) > 1 and area:
+        # 다가구는 연면적 ÷ 가구 수가 방 한 칸의 평균 크기에 가깝다. 거래 면적과 맞는 건물만 남긴다.
+        sized = [b for b in cands if b["households"] and b["area_total"]
+                 and abs(b["area_total"] / b["households"] - area) / area <= UNIT_AREA_TOL]
+        if sized:
+            cands = sized
+            steps.append((cands, "size"))
+    return steps
+
+
+def unit_sizes(b: dict, floors: dict[str, list[dict]]) -> list[float]:
+    sizes = []
+    for f in floors.get(b["jkey"], []):
+        m = re.search(r"(\d+)\s*(가구|세대)", f.get("etcPurps") or "")
+        if m and f.get("area") and int(m.group(1)) > 0:
+            sizes.append(float(f["area"]) / int(m.group(1)))
+    return sizes
+
+
+def match(deals: list[dict], buildings: list[dict], cache: dict, addrs: dict[str, dict], k: dict[str, str]) -> list[tuple[list[dict], str]]:
+    """거래마다 (남은 후보 건물, 후보를 하나로 줄인 단서). 후보가 여럿이면 단서는 ''."""
     by_road_year: dict[tuple[str, int], list[dict]] = defaultdict(list)
+    by_jibun: dict[tuple[str, str], list[dict]] = defaultdict(list)
     for b in buildings:
         by_road_year[(b["road"], b["built"])].append(b)
-    def first_pick(r: dict) -> list[dict]:
-        y = int(r["built_year"])
-        cands = [b for d in range(-YEAR_TOL, YEAR_TOL + 1) for b in by_road_year.get((base_road(r["road"]), y + d), [])]
-        # 국토부는 단독다가구 번지를 '2**'처럼 앞자리와 자릿수만 남기고 가린다. 같은 동·같은 모양의 본번만 남긴다.
-        mask = r["jibun"].strip()
-        if re.fullmatch(r"\d?\*+", mask):
-            pattern = re.compile("^" + mask.replace("*", r"\d") + "$")
-            cands = [b for b in cands if b["dong"] == r["dong"] and pattern.match(b["jibun"].split("-")[0])]
-        exact = [b for b in cands if b["built"] == y]
-        pick = exact if len(exact) == 1 else cands
-        area = float(r["area_m2"]) if r["area_m2"] else None
-        if len(pick) > 1 and area:
-            # 다가구는 연면적 ÷ 가구 수가 방 한 칸의 평균 크기에 가깝다. 거래 면적과 맞는 건물만 남긴다.
-            sized = [b for b in pick if b["households"] and b["area_total"]
-                     and abs(b["area_total"] / b["households"] - area) / area <= UNIT_AREA_TOL]
-            if sized:
-                pick = sized
-        if len(pick) > 1 and any((b["households"] or 0) >= 2 for b in pick):
-            pick = [b for b in pick if (b["households"] or 0) >= 2]
-        return pick
+        by_jibun[(b["dong"], b["jibun"])].append(b)
 
-    deals = [r for r in rows if r["roomlike"] == "1" and r["dong"] in CITY_DONGS and r["built_year"].isdigit()]
-    picks = [first_pick(r) for r in deals]
+    steps = []
+    for r in deals:
+        jb = full_jibun(r)
+        if jb:
+            # 번지가 그대로 나온 거래는 그 번지의 건물이다. 한 번지에 동이 여럿이면 준공 연도로 고른다.
+            cands = by_jibun.get((r["dong"], jb), [])
+            same_year = [b for b in cands if b["built"] == int(r["built_year"])]
+            steps.append([(same_year if len(same_year) == 1 else cands, "jibun")])
+        else:
+            steps.append(road_candidates(r, by_road_year))
+
     cache.setdefault("floors", {})
-    need = sorted({b["jkey"] for p in picks if len(p) > 1 for b in p} - set(cache["floors"]))
+    need = sorted({b["jkey"] for s in steps if len(s[-1][0]) > 1 for b in s[-1][0]} - set(cache["floors"]))
     print(f"후보가 여럿인 거래의 층별개요 새로 조회 {len(need)}곳")
     with ThreadPoolExecutor(3) as ex:
         for j, items in zip(need, ex.map(lambda j: register(addrs[j], k["data"], FLOOR_URL), need)):
@@ -165,27 +213,43 @@ def main() -> int:
                 cache["floors"][j] = [{f: i.get(f) for f in ("etcPurps", "area", "mainAtchGbCdNm", "flrGbCdNm")} for i in items]
     CACHE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
 
-    def unit_sizes(b: dict) -> list[float]:
-        sizes = []
-        for f in cache["floors"].get(b["jkey"], []):
-            m = re.search(r"(\d+)\s*(가구|세대)", f.get("etcPurps") or "")
-            if m and f.get("area") and int(m.group(1)) > 0:
-                sizes.append(float(f["area"]) / int(m.group(1)))
-        return sizes
-
-    matched = defaultdict(list)
-    stats = {"unique": 0, "several": 0, "none": 0, "by_floor": 0}
-    for r, pick in zip(deals, picks):
+    out = []
+    for r, s in zip(deals, steps):
+        cands = s[-1][0]
         area = float(r["area_m2"]) if r["area_m2"] else None
-        if len(pick) > 1 and area:
-            # 층별개요의 '층 면적 ÷ 그 층 가구 수'가 거래 면적과 맞는 건물만 남긴다.
-            fit = [b for b in pick if any(abs(u - area) / area <= FLOOR_UNIT_TOL for u in unit_sizes(b))]
-            if len(fit) == 1:
-                stats["by_floor"] += 1
-            if fit:
-                pick = fit
+        if len(cands) > 1 and area and s[-1][1] != "jibun":
+            # 층별개요의 '층 면적 ÷ 그 층 가구 수'가 거래 면적과 맞지 않는 건물을 뺀다.
+            # 층별 가구 수가 안 적힌 건물('다가구주택'만 적힘)은 모르는 것이지 안 맞는 것이 아니라 남긴다.
+            # 다만 다른 후보가 빠져 '모르는' 건물 하나만 남으면, 그 건물이 맞는다는 근거는 없으니 줄이지 않는다.
+            def fits(b: dict) -> bool | None:
+                sizes = unit_sizes(b, cache["floors"])
+                return any(abs(u - area) / area <= FLOOR_UNIT_TOL for u in sizes) if sizes else None
+            fit = [b for b in cands if fits(b) is not False]
+            if fit and len(fit) < len(cands) and any(fits(b) for b in fit):
+                s.append((fit, "floor"))
+                cands = fit
+        if len(cands) > 1 and s[-1][1] != "jibun":
+            # 국토부 건축년도와 대장 사용승인 연도는 1년 어긋날 때가 있어 ±1년으로 찾되, 남은 후보 중 같은 해가 하나면 그것으로 본다.
+            same_year = [b for b in cands if b["built"] == int(r["built_year"])]
+            if len(same_year) == 1:
+                s.append((same_year, "year"))
+                cands = same_year
+        how = next((name for c, name in s if len(c) == 1), "") if len(cands) == 1 else ""
+        out.append((cands, how))
+    return out
+
+
+def main() -> int:
+    k = keys()
+    rows, cache, addrs, buildings = load(k)
+    deals = [r for r in rows if r["roomlike"] == "1" and r["dong"] in CITY_DONGS and r["built_year"].isdigit()]
+    results = match(deals, buildings, cache, addrs, k)
+    matched = defaultdict(list)
+    stats = defaultdict(int)
+    for r, (pick, how) in zip(deals, results):
         if len(pick) == 1:
             stats["unique"] += 1
+            stats[how] += 1
             matched[pick[0]["id"]].append(r)
         else:
             stats["several" if pick else "none"] += 1
@@ -211,15 +275,15 @@ def main() -> int:
                        "deposit": b["deposit"] if shown else None})
     with OUT_CSV.open("w", encoding="utf-8-sig", newline="") as f:
         f.write('"출처: 행정안전부 도로명주소 검색 API(건물 목록) + 국토교통부 건축HUB 건축물대장 표제부·층별개요 '
-                '+ 국토부 전월세 실거래(길·준공 연도·방 크기로 맞춘 추정, 거래 3건 이상인 건물만 가운데 값 공개)"\n')
+                '+ 국토부 전월세 실거래(번지가 가려진 거래는 길·준공 연도·방 크기로 맞춘 추정, 거래 3건 이상인 건물만 가운데 값 공개)"\n')
         w = csv.DictWriter(f, fieldnames=list(public[0].keys()))
         w.writeheader()
         w.writerows(public)
     OUT_JSON.write_text(json.dumps(public, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"주거용 건물 {len(buildings)}곳, 거래가 붙은 건물 {sum(1 for b in buildings if b['deals'])}곳"
           f"(가격 공개 {sum(1 for b in public if b['deals'])}곳)")
-    print(f"원룸형 거래 맞춤: 건물 하나로 추정 {stats['unique']}건(층별개요로 정한 것 {stats['by_floor']}건), "
-          f"후보 여럿 {stats['several']}건, 후보 없음 {stats['none']}건")
+    print(f"원룸형 거래 맞춤: 건물 하나로 추정 {stats['unique']}건, 후보 여럿 {stats['several']}건, 후보 없음 {stats['none']}건")
+    print("  하나로 정한 단서: " + ", ".join(f"{HOW[h]} {stats[h]}건" for h in HOW if stats[h]))
     return 0
 
 
