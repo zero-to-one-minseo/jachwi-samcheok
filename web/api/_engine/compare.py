@@ -154,7 +154,7 @@ def peers(x: Listing) -> list[dict[str, Any]]:
     sized = [r for r in near if area is not None and r["area"] and abs(r["area"] - area) <= AREA_TOL_AREA]
     pool = sized if len(sized) >= MIN_PEERS else near
     where = x.dong or "·".join(road_dongs) or (x.area_hint if x.area_hint != "모름" else "캠퍼스·시내")
-    label = f"{where} 원룸형" + (f" {area - AREA_TOL_AREA:g}~{area + AREA_TOL_AREA:g}㎡" if pool is sized and sized else "")
+    label = f"{where} 원룸형" + (f" {max(0, round(area - AREA_TOL_AREA))}~{round(area + AREA_TOL_AREA)}㎡" if pool is sized and sized else "")
     if pool:
         out.append({"label": label, "basis": "국토부 실거래 3년(월세·40㎡ 이하)", "stats": _stats([r["monthly"] for r in pool])})
 
