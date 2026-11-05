@@ -92,7 +92,10 @@ def load_coords(path: Path = COORDS_CSV) -> dict[tuple[str, str], dict[str, Any]
         if lat is None or lon is None:
             continue
         # 좌표표는 번지를 지우기 전 이름으로 만들어졌으니, rooms.csv와 같은 규칙으로 맞춘다.
-        out[(vague_place(row.get("name", "")), row.get("dong", ""))] = {"lat": lat, "lon": lon, "precision": row.get("precision") or "블록"}
+        out[(vague_place(row.get("name", "")), row.get("dong", ""))] = {
+            "lat": lat, "lon": lon, "precision": row.get("precision") or "블록",
+            "address": row.get("address") or "", "place_name": row.get("place_name") or "",
+        }
     return out
 
 
@@ -126,6 +129,7 @@ def attach_coords(
         c = coords.get((r.get("name", ""), r.get("dong", "")))
         if c:
             r["lat"], r["lon"], r["geo_precision"] = c["lat"], c["lon"], c["precision"]
+            r["address"], r["place_name"] = c.get("address", ""), c.get("place_name", "")
         else:
             center = centers.get(r.get("area", "")) or fallback
             if center is None:

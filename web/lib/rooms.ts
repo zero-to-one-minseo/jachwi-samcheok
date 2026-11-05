@@ -30,6 +30,11 @@ export interface Room {
   sourceLine: string;
   transferNote: string;
   selected: SelectedRoom;
+  /** 네이버 지역 검색으로 건물을 찾은 방. 아니면 길·생활권 단위 대략 위치다. */
+  precise: boolean;
+  address: string;
+  placeName: string;
+  naverUrl: string;
 }
 
 export interface RoomsData {

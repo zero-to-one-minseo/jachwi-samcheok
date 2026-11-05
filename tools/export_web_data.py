@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import urllib.parse
 import sys
 from pathlib import Path
 
@@ -102,6 +103,13 @@ def transfer_note(room: dict) -> str:
             f"집주인에게 직접 확인하고, 계약서를 새로 쓰거나 동의 내용을 적어 두세요.{orig_txt}")
 
 
+def naver_url(room: dict) -> str:
+    """네이버 지도 검색 주소. 건물 이름을 찾은 방만 둔다(거리뷰는 네이버 지도에서 본다)."""
+    if room.get("geo_precision") != "건물" or not room.get("place_name"):
+        return ""
+    return "https://map.naver.com/p/search/" + urllib.parse.quote(f"삼척 {room['place_name']}")
+
+
 def compare(room: dict, medians: dict) -> dict | None:
     cmp = rd.compare_to_area(room, medians)
     if not cmp:
@@ -140,6 +148,10 @@ def export_room(r: dict, medians: dict, in_city: bool) -> dict:
         "sourceLine": source_line(r),
         "transferNote": transfer_note(r),
         "selected": rd.to_selected_room(r),
+        "precise": r.get("geo_precision") == "건물",
+        "address": r.get("address") or "",
+        "placeName": r.get("place_name") or "",
+        "naverUrl": naver_url(r),
     }
 
 

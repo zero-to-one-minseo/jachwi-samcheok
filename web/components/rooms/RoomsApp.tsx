@@ -132,7 +132,7 @@ function RoomList({ rooms, onPick }: { rooms: Room[]; onPick: (id: string) => vo
             {r.terms && <p className="mt-0.5 text-sm">{r.terms}</p>}
             <p className="mt-1.5 text-[15px] font-semibold">{r.name}</p>
             <p className="mt-0.5 text-[13px] text-muted">
-              {r.area} · {r.kindWord}{!r.inCity && " · 시내 밖이라 지도에는 없어요"}
+              {r.area} · {r.kindWord}{r.precise && " · 건물 위치"}{!r.inCity && " · 시내 밖이라 지도에는 없어요"}
             </p>
           </button>
         </li>
@@ -155,6 +155,16 @@ function RoomDetail({ room, onBack }: { room: Room; onBack: () => void }) {
         <p className={`mt-3 inline-block rounded-lg px-2.5 py-1 text-sm font-semibold ${CHIP[room.compare.tone]}`}>{room.compare.text}</p>
       )}
       <dl className="mt-4 space-y-3 text-[15px]">
+        <Row term="위치">
+          {room.precise ? (
+            <>
+              {room.placeName} · {room.address}
+              <span className="mt-0.5 block text-xs text-muted">네이버 지역 검색으로 찾은 건물 위치예요.</span>
+            </>
+          ) : (
+            <span className="text-muted">건물을 특정할 수 없어 길·생활권 단위 대략 위치로 찍었어요.</span>
+          )}
+        </Row>
         <Row term="돈">{room.priceLine}</Row>
         <Row term="포함">{room.includedLine}</Row>
         {room.detailLine && <Row term="방">{room.detailLine}</Row>}
@@ -164,6 +174,17 @@ function RoomDetail({ room, onBack }: { room: Room; onBack: () => void }) {
           <p className="font-bold text-pricey">집주인 동의 확인</p>
           <p className="mt-1">{room.transferNote}</p>
         </div>
+      )}
+      {room.naverUrl && (
+        <a
+          href={room.naverUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-line-strong px-4 py-3 text-[15px] font-semibold hover:border-ink"
+        >
+          네이버 지도에서 건물·거리뷰 보기
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M5 2h7v7M12 2 5.5 8.5M10 9v3H2V4h3" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
+        </a>
       )}
       <p className="mt-4 text-xs text-muted">{room.sourceLine}</p>
       <Link
@@ -192,7 +213,7 @@ function Footer({ data }: { data: RoomsData }) {
       <p>조사 {data.survey.when} · 출처: {data.survey.sources.join(", ")}</p>
       <p className="mt-1">
         팀원이 글을 직접 읽고 숫자와 조건만 옮겼어요. 연락처, 호수, 글 주소는 싣지 않았어요. 선세·연세는 개월 수로 나눈 월 환산으로 비교하고, 양도 글은
-        생활권 가운데 값에서 뺐어요. 핀은 길 단위로 뭉갠 대략 위치예요.
+        생활권 가운데 값에서 뺐어요. 건물 이름이 분명한 방은 네이버 지역 검색으로 찾은 건물 위치이고, 나머지는 길·생활권 단위 대략 위치예요.
       </p>
       <p className="mt-2 font-bold text-ink">실제 매물 여부는 연락해서 확인하세요.</p>
     </footer>
