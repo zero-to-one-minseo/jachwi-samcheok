@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
+import { useCheckState, useElapsed } from "@/lib/checkStore";
 
 const noSubscribe = () => () => {};
 
@@ -16,6 +17,9 @@ export default function TopBar() {
   const path = usePathname();
   // 상단 줄은 모든 페이지가 같이 쓰는 미리 그린 틀이라 서버는 지금 주소를 모른다. 붙은 뒤에만 현재 탭을 표시한다.
   const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const check = useCheckState();
+  const elapsed = useElapsed(check);
+  const onCheck = hydrated && path.startsWith("/check");
   return (
     <header className="sticky top-0 z-[1000] flex h-14 shrink-0 items-center gap-6 border-b border-line bg-surface px-4 md:px-6">
       <Link href="/" className="flex items-baseline gap-2">
@@ -39,6 +43,17 @@ export default function TopBar() {
           );
         })}
       </nav>
+      {!onCheck && check.step === "running" && (
+        <Link href="/check" className="tabular ml-auto flex items-center gap-2 rounded-full bg-sea-soft px-3 py-1.5 text-sm font-bold text-sea">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-sea" aria-hidden />
+          계약서 검사 중 {elapsed}초
+        </Link>
+      )}
+      {!onCheck && check.step === "done" && !check.seen && (
+        <Link href="/check" className="tabular ml-auto rounded-full bg-sea px-3 py-1.5 text-sm font-bold text-white">
+          검사 완료{check.elapsedS != null && ` · ${check.elapsedS}초`} · 결과 보기
+        </Link>
+      )}
     </header>
   );
 }

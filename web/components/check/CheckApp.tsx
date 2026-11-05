@@ -2,116 +2,26 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import ReportView from "./ReportView";
-import type { AnalyzeResponse, Report, ReportMeta } from "@/lib/report";
 import type { Room } from "@/lib/rooms";
-import { prepareFile, UploadError, type Prepared } from "@/lib/upload";
-
-const SESSION_CAP = 10;
-const CAP_KEY = "jachwi_analyses";
-
-type State =
-  | { step: "idle" }
-  | { step: "preparing" }
-  | { step: "ready"; file: Prepared }
-  | { step: "running"; file: Prepared; started: number }
-  | { step: "done"; report: Report; meta: ReportMeta; photoUrl: string | null }
-  | { step: "error"; message: string; retry: Prepared | null };
-
-function usedCount(): number {
-  try {
-    return Number(sessionStorage.getItem(CAP_KEY) || 0);
-  } catch {
-    return 0;
-  }
-}
-
-function addUse() {
-  try {
-    sessionStorage.setItem(CAP_KEY, String(usedCount() + 1));
-  } catch {
-    // 저장이 막힌 브라우저면 세지 않는다(서버 상한이 따로 있다).
-  }
-}
+import { analyze, markSeen, pickFile, SESSION_CAP, showSample, useCheckState, useElapsed, usedCount } from "@/lib/checkStore";
 
 export default function CheckApp({ rooms }: { rooms: Room[] }) {
   const params = useSearchParams();
   const room = rooms.find((r) => r.id === params.get("room")) ?? null;
-  const [state, setState] = useState<State>({ step: "idle" });
-  const [now, setNow] = useState(0);
-  const [used, setUsed] = useState(() => (typeof window === "undefined" ? 0 : usedCount()));
+  const state = useCheckState();
+  const elapsed = useElapsed(state);
+  const used = typeof window === "undefined" ? 0 : usedCount();
   const result = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (state.step !== "running") return;
-    const t = setInterval(() => setNow(Date.now()), 500);
-    return () => clearInterval(t);
-  }, [state.step]);
-  useEffect(() => {
     if (state.step === "done" || state.step === "error") result.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (state.step === "done") markSeen();
   }, [state.step]);
-
-  const pickFile = async (f: File | undefined) => {
-    if (!f) return;
-    setState({ step: "preparing" });
-    try {
-      setState({ step: "ready", file: await prepareFile(f) });
-    } catch (e) {
-      setState({ step: "error", message: e instanceof UploadError ? e.message : "파일을 준비하지 못했어요. 다른 파일로 해 주세요.", retry: null });
-    }
-  };
-
-  const analyze = async (file: Prepared) => {
-    if (usedCount() >= SESSION_CAP) {
-      setState({ step: "error", message: `이 브라우저에서 분석은 ${SESSION_CAP}회까지예요. '샘플로 해 보기'로 결과 모양을 볼 수 있어요.`, retry: null });
-      return;
-    }
-    setState({ step: "running", file, started: Date.now() });
-    setNow(Date.now());
-    try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file_b64: file.b64, filename: file.filename }),
-      });
-      let data: AnalyzeResponse | null = null;
-      try {
-        data = (await res.json()) as AnalyzeResponse;
-      } catch {
-        data = null;
-      }
-      if (!data) {
-        const msg = res.status === 413 ? "파일이 너무 커요. 계약서 쪽만 다시 찍어 올려 주세요." : "서버가 답을 주지 못했어요. 잠시 뒤 다시 해 주세요.";
-        setState({ step: "error", message: msg, retry: res.status === 413 ? null : file });
-        return;
-      }
-      if (data.ok) {
-        addUse();
-        setUsed(usedCount());
-        setState({ step: "done", report: data.report, meta: data.meta, photoUrl: file.previewUrl });
-      } else {
-        if (data.code !== "bad_file" && data.code !== "too_large") addUse();
-        setState({ step: "error", message: data.message, retry: data.retryable ? file : null });
-      }
-    } catch {
-      setState({ step: "error", message: "인터넷 연결을 확인하고 다시 해 주세요.", retry: file });
-    }
-  };
-
-  const showSample = async () => {
-    setState({ step: "preparing" });
-    try {
-      const data = (await (await fetch("/data/sample_report.json")).json()) as AnalyzeResponse;
-      if (data.ok) setState({ step: "done", report: data.report, meta: data.meta, photoUrl: "/data/sample_a.jpg" });
-    } catch {
-      setState({ step: "error", message: "샘플을 불러오지 못했어요.", retry: null });
-    }
-  };
 
   const busy = state.step === "running" || state.step === "preparing";
   const file = state.step === "ready" || state.step === "running" ? state.file : null;
-  const elapsed = state.step === "running" ? Math.max(0, Math.floor((now - state.started) / 1000)) : 0;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 md:px-6 md:py-10">
@@ -176,7 +86,12 @@ export default function CheckApp({ rooms }: { rooms: Room[] }) {
           <span suppressHydrationWarning className="text-xs text-muted">이 브라우저에서 남은 분석 {Math.max(0, SESSION_CAP - used)}회</span>
         </div>
         {state.step === "running" && (
-          <p className="mt-3 text-sm text-muted" aria-live="polite">계약서를 읽고 있어요. 보통 30초쯤 걸려요. 화면을 닫지 말고 기다려 주세요.</p>
+          <p className="tabular mt-3 text-[15px] font-bold text-sea" aria-live="polite">
+            ⏱ 분석 중 {elapsed}초 · 다른 탭으로 가도 계속 돌아가요
+          </p>
+        )}
+        {state.step === "done" && state.elapsedS != null && (
+          <p className="tabular mt-3 text-[15px] font-bold text-sea">⏱ 결과까지 {state.elapsedS}초</p>
         )}
       </section>
 

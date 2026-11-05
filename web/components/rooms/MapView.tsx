@@ -189,6 +189,7 @@ export default function MapView({
   const box = useRef<HTMLDivElement>(null);
   const ref = useRef<{ L: L; map: Leaflet.Map; cluster: Leaflet.MarkerClusterGroup; picked: Leaflet.LayerGroup; molit: Leaflet.LayerGroup } | null>(null);
   const pins = useRef<{ marker: Leaflet.Marker; room: Room }[]>([]);
+  const onZoom = useRef<() => void>(() => {});
   // 지도는 비동기로 한 번 만들어지므로, 핀을 그릴 때는 늘 최신 값을 읽게 ref에 둔다.
   const latest = useRef({ rooms, selectedId, onSelect, showMolit });
   latest.current = { rooms, selectedId, onSelect, showMolit };
@@ -243,7 +244,7 @@ export default function MapView({
       const molitGroup = L.layerGroup();
       if (latest.current.showMolit) molitGroup.addTo(map);
       ref.current = { L, map, cluster, picked, molit: molitGroup };
-      map.on("zoomend", refreshPinIcons);
+      map.on("zoomend", () => onZoom.current());
       // 화면 폭이 바뀌어 지도 칸 크기가 달라지면 Leaflet에 다시 재게 한다(안 하면 빈 칸으로 남는다).
       resize = new ResizeObserver(() => map.invalidateSize());
       resize.observe(box.current);
@@ -278,6 +279,8 @@ export default function MapView({
     const zoom = cur.map.getZoom();
     for (const { marker, room } of pins.current) marker.setIcon(pinIcon(cur.L, room, false, zoom));
   }
+
+  onZoom.current = refreshPinIcons;
 
   function setPins() {
     const cur = ref.current;
