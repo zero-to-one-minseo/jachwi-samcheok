@@ -1,4 +1,5 @@
-"""현황판 지도 부품(사양서_조립.md R4). folium + streamlit-folium, 바탕 지도는 OpenStreetMap."""
+"""현황판 지도 부품(사양서_조립.md R4). folium + streamlit-folium.
+바탕 지도는 lib/basemap.py가 OpenStreetMap 데이터를 직접 칠하고, 그 파일이 없을 때만 OSM 타일 그림을 쓴다."""
 
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ import streamlit as st
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 
+from lib import basemap
 from lib.rooms_data import APP_DIR, compare_to_area
 from tools.build_rooms import vague_place
 
@@ -24,6 +26,7 @@ SCHOOL = "학교"
 DEFAULT_ZOOM = 15
 SELECTED_ZOOM = 17
 MIN_ZOOM = 14
+MAX_ZOOM = 18
 # 삼척 시내와 캠퍼스 둘레. 지도를 이 밖으로 끌거나 더 멀리 축소하지 못하게 한다(도계·근덕 방은 목록에만 보인다).
 CITY_BOUNDS = {"min_lat": 37.425, "max_lat": 37.468, "min_lon": 129.135, "max_lon": 129.195}
 CHEAP_DIFF = -3.0
@@ -209,14 +212,23 @@ def build_map(
     zoom: int | None = None,
 ) -> folium.Map:
     start = start or centers.get(SCHOOL) or (37.4505, 129.1615)
+    has_basemap = bool(basemap.load_basemap())
     m = folium.Map(
-        location=list(start), zoom_start=zoom or DEFAULT_ZOOM, tiles=TILES, control_scale=True,
-        min_zoom=MIN_ZOOM, max_bounds=True, max_bounds_viscosity=1.0, **CITY_BOUNDS,
+        location=list(start), zoom_start=zoom or DEFAULT_ZOOM, tiles=None if has_basemap else TILES,
+        control_scale=True, prefer_canvas=True,
+        min_zoom=MIN_ZOOM, max_zoom=MAX_ZOOM, max_bounds=True, max_bounds_viscosity=1.0, **CITY_BOUNDS,
     )
-    m.get_root().header.add_child(folium.Element(_TILE_CSS))
+    # folium은 확대 한계를 타일에만 넘긴다. 타일 없이 그릴 때는 지도에 직접 넣어야 핀 묶기가 동작한다.
+    m.options.update({"minZoom": MIN_ZOOM, "maxZoom": MAX_ZOOM})
+    if has_basemap:
+        basemap.add_basemap(m)
+    else:
+        m.get_root().header.add_child(folium.Element(_TILE_CSS))
     for area, (lat, lon) in centers.items():
+        if area == SCHOOL and has_basemap:
+            continue
         text = "강원대 삼척캠퍼스" if area == SCHOOL else area
-        folium.Marker([lat, lon], icon=folium.DivIcon(html=_area_label(text), icon_size=(0, 0))).add_to(m)
+        folium.Marker([lat, lon], icon=folium.DivIcon(html=_area_label(text), icon_size=(0, 0)), interactive=False).add_to(m)
     cluster = MarkerCluster(
         icon_create_function=_CLUSTER_ICON,
         options={

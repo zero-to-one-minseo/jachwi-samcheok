@@ -59,6 +59,9 @@ lib/
   rules.py              AI 결과에 근거·등급 상한·법 표현 바꾸기·관리비 규칙·개인정보 가리기 적용
   render.py             카드·관리비·질문 그리기, 마크다운 기호 막기
   limits.py             세션·하루 분석 횟수 상한
+  map_view.py           지도: 좌표 붙이기, 가격 핀, 핀 묶기, 누른 방 돌려받기
+  basemap.py            바탕 지도를 네이버 지도 같은 밝은 색으로 직접 칠하기
+  style.py              두 화면이 같이 쓰는 꾸밈(CSS). 색·글꼴 기본값은 .streamlit/config.toml [theme]
 prompts/instructions.txt AI 지시문
 criteria.csv            확인 기준 목록(원본. 구글 시트에서 고친 뒤 CSV UTF-8로 받아 덮어쓴다. 엑셀로 열어 저장하지 않는다)
 data/raw/*.csv          팀 조사 원자료(16칸)
@@ -66,6 +69,7 @@ data/rooms.csv          현황판이 읽는 정리본(tools/build_rooms.py가 �
 data/baseline_molit.csv 국토부 전월세 실거래(삼척시, 279건). 기준선은 40㎡ 이하 월세의 가운데 값. 파일이 없으면 '준비 중'
 samples/                가상 샘플 계약서(sample_a.jpg, sample_y.jpg, sample_b.pdf), 정답표(answers.md), 저장본(saved_*.json)
 tools/build_rooms.py    원자료 → rooms.csv
+tools/build_basemap.py  OpenStreetMap에서 삼척 시내 길·건물·강·공원을 받아 data/basemap.geojson으로(바탕 지도)
 tools/make_samples.py   가상 샘플 다시 그리기
 tests/                  unittest 시험
 .streamlit/config.toml  maxUploadSize 20, magicEnabled false

@@ -10,6 +10,8 @@
 | [streamlit-folium](https://github.com/randyzwitch/streamlit-folium) | MIT | 지도를 Streamlit에 넣고 누른 방을 돌려받기 |
 | [OpenStreetMap](https://www.openstreetmap.org/copyright) | ODbL(지도 데이터) | 바탕 지도. 화면에 출처를 표시한다 |
 | OSM Nominatim | ODbL | 조사 단계에서 길 이름을 대략 좌표로 바꿀 때(앱은 부르지 않음) |
+| OpenStreetMap 데이터(Overpass API) | ODbL | 바탕 지도의 길·건물·강·공원·이름표. `tools/build_basemap.py`로 받아 `data/basemap.geojson`에 두고 앱이 직접 칠한다 |
+| [SUIT 글꼴](https://github.com/sun-typeface/SUIT) | OFL-1.1 | 앱 전체 글꼴(jsDelivr에서 불러옴) |
 
 시세 자료는 팀이 강원대 홈페이지 게시판, 당근부동산, 에브리타임, 집품, 피터팬의좋은방구하기의 공개 글과 전화 조사에서 숫자와 조건만 옮겨 적은 것이다. 글 원문, 작성자, 연락처는 싣지 않는다.
 

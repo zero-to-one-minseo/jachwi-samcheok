@@ -72,7 +72,8 @@ class RealDataTest(unittest.TestCase):
         fmap = map_view.build_map(placed, {}, centers)
         layers = [fmap] + [c for c in fmap._children.values() if isinstance(c, MarkerCluster)]
         markers = [c for layer in layers for c in layer._children.values() if isinstance(c, folium.Marker)]
-        self.assertEqual(len(markers), len(placed) + len(centers))
+        room_pins = [mk for mk in markers if any(isinstance(ch, folium.Tooltip) for ch in mk._children.values())]
+        self.assertEqual(len(room_pins), len(placed))
 
 
 if __name__ == "__main__":
