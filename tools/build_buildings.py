@@ -37,10 +37,13 @@ CACHE = APP_DIR / "data" / "raw" / "buildings_cache.json"
 OUT_CSV = APP_DIR / "data" / "buildings.csv"
 OUT_JSON = APP_DIR / "web" / "api" / "_engine" / "data" / "buildings.json"
 TITLE_URL = "https://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo"
+FLOOR_URL = "https://apis.data.go.kr/1613000/BldRgstHubService/getBrFlrOulnInfo"
 HOUSING = ("다가구", "다세대", "연립", "단독주택", "공동주택", "도시형", "오피스텔", "기숙사", "근린생활")
 CITY_DONGS = {d for ds in rd.AREA_DONGS.values() for d in ds}
 YEAR_TOL = 1
 UNIT_AREA_TOL = 0.35
+FLOOR_UNIT_TOL = 0.2
+MIN_PUBLIC_DEALS = 3
 
 
 def keys() -> dict[str, str]:
@@ -60,7 +63,7 @@ def road_buildings(road: str, key: str) -> list[dict]:
         page += 1
 
 
-def register(addr: dict, key: str) -> list[dict] | None:
+def register(addr: dict, key: str, url: str = TITLE_URL) -> list[dict] | None:
     """대장 목록. 서버가 거절하거나 끊기면 None(다음 실행 때 다시 묻는다), 대장이 정말 없으면 빈 목록."""
     adm = addr["admCd"]
     q = urllib.parse.urlencode({"serviceKey": key, "sigunguCd": adm[:5], "bjdongCd": adm[5:],
@@ -69,7 +72,7 @@ def register(addr: dict, key: str) -> list[dict] | None:
                                 "_type": "json", "numOfRows": "50", "pageNo": "1"})
     for attempt in range(4):
         try:
-            with urllib.request.urlopen(f"{TITLE_URL}?{q}", timeout=20) as r:
+            with urllib.request.urlopen(f"{url}?{q}", timeout=20) as r:
                 res = json.load(r)["response"]
             if res.get("header", {}).get("resultCode") != "00":
                 raise RuntimeError(res.get("header", {}).get("resultMsg"))
@@ -125,16 +128,12 @@ def main() -> int:
             buildings.append({"id": f"b{len(buildings) + 1:04d}", "road": a["road"], "address": a["roadAddrPart1"],
                               "name": name, "dong": a["emdNm"], "purpose": purpose, "built": int(year),
                               "floors": t.get("grndFlrCnt"), "households": (t.get("fmlyCnt") or 0) + (t.get("hhldCnt") or 0),
-                              "area_total": t.get("totArea"), "jibun": f"{a['lnbrMnnm']}-{a['lnbrSlno']}"})
+                              "area_total": t.get("totArea"), "jibun": f"{a['lnbrMnnm']}-{a['lnbrSlno']}", "jkey": j})
 
     by_road_year: dict[tuple[str, int], list[dict]] = defaultdict(list)
     for b in buildings:
         by_road_year[(b["road"], b["built"])].append(b)
-    matched = defaultdict(list)
-    stats = {"unique": 0, "several": 0, "none": 0}
-    for r in rows:
-        if r["roomlike"] != "1" or r["dong"] not in CITY_DONGS or not r["built_year"].isdigit():
-            continue
+    def first_pick(r: dict) -> list[dict]:
         y = int(r["built_year"])
         cands = [b for d in range(-YEAR_TOL, YEAR_TOL + 1) for b in by_road_year.get((base_road(r["road"]), y + d), [])]
         # 국토부는 단독다가구 번지를 '2**'처럼 앞자리와 자릿수만 남기고 가린다. 같은 동·같은 모양의 본번만 남긴다.
@@ -151,6 +150,40 @@ def main() -> int:
                      and abs(b["area_total"] / b["households"] - area) / area <= UNIT_AREA_TOL]
             if sized:
                 pick = sized
+        if len(pick) > 1 and any((b["households"] or 0) >= 2 for b in pick):
+            pick = [b for b in pick if (b["households"] or 0) >= 2]
+        return pick
+
+    deals = [r for r in rows if r["roomlike"] == "1" and r["dong"] in CITY_DONGS and r["built_year"].isdigit()]
+    picks = [first_pick(r) for r in deals]
+    cache.setdefault("floors", {})
+    need = sorted({b["jkey"] for p in picks if len(p) > 1 for b in p} - set(cache["floors"]))
+    print(f"후보가 여럿인 거래의 층별개요 새로 조회 {len(need)}곳")
+    with ThreadPoolExecutor(3) as ex:
+        for j, items in zip(need, ex.map(lambda j: register(addrs[j], k["data"], FLOOR_URL), need)):
+            if items is not None:
+                cache["floors"][j] = [{f: i.get(f) for f in ("etcPurps", "area", "mainAtchGbCdNm", "flrGbCdNm")} for i in items]
+    CACHE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+    def unit_sizes(b: dict) -> list[float]:
+        sizes = []
+        for f in cache["floors"].get(b["jkey"], []):
+            m = re.search(r"(\d+)\s*(가구|세대)", f.get("etcPurps") or "")
+            if m and f.get("area") and int(m.group(1)) > 0:
+                sizes.append(float(f["area"]) / int(m.group(1)))
+        return sizes
+
+    matched = defaultdict(list)
+    stats = {"unique": 0, "several": 0, "none": 0, "by_floor": 0}
+    for r, pick in zip(deals, picks):
+        area = float(r["area_m2"]) if r["area_m2"] else None
+        if len(pick) > 1 and area:
+            # 층별개요의 '층 면적 ÷ 그 층 가구 수'가 거래 면적과 맞는 건물만 남긴다.
+            fit = [b for b in pick if any(abs(u - area) / area <= FLOOR_UNIT_TOL for u in unit_sizes(b))]
+            if len(fit) == 1:
+                stats["by_floor"] += 1
+            if fit:
+                pick = fit
         if len(pick) == 1:
             stats["unique"] += 1
             matched[pick[0]["id"]].append(r)
@@ -166,17 +199,27 @@ def main() -> int:
         b["area"] = round(st.median([float(r["area_m2"]) for r in recs if r["area_m2"]]), 1) if recs else None
         b["period"] = f"{min(r['contract_ym'] for r in recs)}~{max(r['contract_ym'] for r in recs)}" if recs else ""
 
-    fields = ["id", "road", "address", "name", "dong", "purpose", "built", "floors", "households", "area_total", "jibun",
-              "deals", "monthly", "deposit", "area", "period"]
+    # 정밀한 대조 결과(지번, 거래 기간·면적)는 git이 무시하는 data/raw에만 둔다.
+    (CACHE.parent / "buildings_full.json").write_text(json.dumps(buildings, ensure_ascii=False), encoding="utf-8")
+    # 국토부가 번지를 가린 단독다가구 거래를 건물에 맞춘 결과라, 공개 파일에는 거래 3건 이상인 건물의 가운데 값만 싣는다.
+    public = []
+    for b in buildings:
+        shown = b["deals"] >= MIN_PUBLIC_DEALS
+        public.append({**{f: b[f] for f in ("id", "road", "address", "name", "dong", "purpose", "built", "floors",
+                                            "households", "area_total")},
+                       "deals": b["deals"] if shown else 0, "monthly": b["monthly"] if shown else None,
+                       "deposit": b["deposit"] if shown else None})
     with OUT_CSV.open("w", encoding="utf-8-sig", newline="") as f:
-        f.write('"출처: 행정안전부 도로명주소 검색 API(건물 목록) + 국토교통부 건축HUB 건축물대장 표제부(용도·사용승인일·층수·가구 수) '
-                '+ 국토부 전월세 실거래(길·준공 연도로 맞춘 추정)"\n')
-        w = csv.DictWriter(f, fieldnames=fields)
+        f.write('"출처: 행정안전부 도로명주소 검색 API(건물 목록) + 국토교통부 건축HUB 건축물대장 표제부·층별개요 '
+                '+ 국토부 전월세 실거래(길·준공 연도·방 크기로 맞춘 추정, 거래 3건 이상인 건물만 가운데 값 공개)"\n')
+        w = csv.DictWriter(f, fieldnames=list(public[0].keys()))
         w.writeheader()
-        w.writerows(buildings)
-    OUT_JSON.write_text(json.dumps(buildings, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print(f"주거용 건물 {len(buildings)}곳, 거래가 붙은 건물 {sum(1 for b in buildings if b['deals'])}곳")
-    print(f"원룸형 거래 맞춤: 건물 하나로 추정 {stats['unique']}건, 후보 여럿 {stats['several']}건, 후보 없음 {stats['none']}건")
+        w.writerows(public)
+    OUT_JSON.write_text(json.dumps(public, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"주거용 건물 {len(buildings)}곳, 거래가 붙은 건물 {sum(1 for b in buildings if b['deals'])}곳"
+          f"(가격 공개 {sum(1 for b in public if b['deals'])}곳)")
+    print(f"원룸형 거래 맞춤: 건물 하나로 추정 {stats['unique']}건(층별개요로 정한 것 {stats['by_floor']}건), "
+          f"후보 여럿 {stats['several']}건, 후보 없음 {stats['none']}건")
     return 0
 
 
