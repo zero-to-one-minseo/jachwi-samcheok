@@ -18,8 +18,10 @@ if str(API_DIR) not in sys.path:
     sys.path.insert(0, str(API_DIR))
 
 from analyze import handler  # noqa: E402
+from chat import handler as chat_handler  # noqa: E402
 
 ROUTE = "/api/analyze"
+CHAT_ROUTE = "/api/chat"
 DEFAULT_PORT = 8822  # 해커톤 프로젝트 구간 8820–8829
 
 
@@ -45,7 +47,9 @@ class DevHandler(handler):
             super().do_GET()
 
     def do_POST(self) -> None:  # noqa: N802
-        if self._route_ok():
+        if self.path.split("?", 1)[0].rstrip("/") == CHAT_ROUTE:
+            chat_handler.do_POST(self)
+        elif self._route_ok():
             super().do_POST()
 
     def do_OPTIONS(self) -> None:  # noqa: N802

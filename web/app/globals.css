@@ -80,6 +80,50 @@ body {
 .leaflet-container:not(.bm-near) .bm-label.minor {
   display: none;
 }
+.molit-road {
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font: 700 11px var(--font-sans);
+  color: #0e5f66;
+  background: #fff;
+  border: 1.5px solid #0e7c86;
+  border-radius: 999px;
+  padding: 2px 8px;
+  box-shadow: 0 1px 3px rgba(28, 34, 40, 0.18);
+  cursor: pointer;
+}
+.molit-road b {
+  color: #1c2228;
+  font-weight: 800;
+}
+.molit-bldg {
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font: 700 11px var(--font-sans);
+  color: #8c6a47;
+  text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
+  cursor: pointer;
+}
+.molit-bldg span {
+  margin-left: 4px;
+  color: #1c2228;
+  font-weight: 800;
+}
+.leaflet-container:not(.bm-near) .molit-bldg {
+  display: none;
+}
+.molit-pop {
+  font: 500 12px/1.55 var(--font-sans);
+  color: #1c2228;
+}
+.molit-pop strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+.molit-pop small {
+  color: #6b7280;
+}
 .leaflet-div-icon.pin-icon,
 .leaflet-div-icon.label-icon,
 .leaflet-div-icon.cluster-icon {

@@ -4,7 +4,7 @@ import CheckApp from "@/components/check/CheckApp";
 import data from "@/public/data/rooms.json";
 import type { RoomsData } from "@/lib/rooms";
 
-export const metadata: Metadata = { title: "계약서 점검 · 계약 전에" };
+export const metadata: Metadata = { title: "계약서 점검 · 자취학과" };
 
 export default function CheckPage() {
   return (

@@ -3,3 +3,4 @@ __pycache__/
 .streamlit/secrets.toml
 data/raw/
 .DS_Store
+.streamlit/secrets.toml.bak-*

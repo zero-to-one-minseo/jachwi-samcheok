@@ -46,6 +46,54 @@ const LABEL_COLOR: Record<string, string> = {
 
 type Feature = GeoJSON.Feature<GeoJSON.Geometry, { k: string; kind?: string; name?: string; p?: number }>;
 
+interface MolitStat {
+  n: number;
+  monthly: number | null;
+  deposit: number | null;
+  area: number | null;
+  built: number | null;
+  from: string;
+  to: string;
+}
+interface MolitLayer {
+  roads: (MolitStat & { name: string; lat: number; lon: number })[];
+  buildings: (MolitStat & { name: string; type: string; lat: number; lon: number })[];
+}
+
+const normName = (s: string) => s.replace(/\s|\(.*?\)/g, "");
+const ym = (s: string) => `${s.slice(0, 4)}.${s.slice(4)}`;
+
+function molitPopup(title: string, what: string, s: MolitStat) {
+  const money = [s.monthly != null ? `월세 ${s.monthly}만` : "", s.deposit != null ? `보증금 ${s.deposit}만` : ""].filter(Boolean).join(" · ");
+  const room = [s.area != null ? `${s.area}㎡` : "", s.built ? `${s.built}년 준공` : ""].filter(Boolean).join(" · ");
+  return (
+    `<div class="molit-pop"><strong>${esc(title)}</strong>${esc(what)} ${s.n}건 가운데 값<br>${esc(money)}` +
+    (room ? `<br>${esc(room)}` : "") +
+    `<br><small>국토교통부 실거래 ${ym(s.from)}~${ym(s.to)}</small></div>`
+  );
+}
+
+function drawMolit(L: L, map: Leaflet.Map, layer: MolitLayer) {
+  for (const r of layer.roads) {
+    if (r.monthly == null) continue;
+    L.marker([r.lat, r.lon], {
+      keyboard: false,
+      icon: L.divIcon({ className: "label-icon", iconSize: [0, 0], html: `<div class="molit-road">${esc(r.name)} 원룸 <b>${r.monthly}만</b></div>` }),
+    })
+      .bindPopup(molitPopup(`${r.name} 원룸 시세`, "원룸형 거래", r))
+      .addTo(map);
+  }
+  for (const b of layer.buildings) {
+    const price = b.monthly != null ? `월 ${b.monthly}만` : b.deposit != null ? `전세 ${b.deposit}만` : "";
+    L.marker([b.lat, b.lon], {
+      keyboard: false,
+      icon: L.divIcon({ className: "label-icon", iconSize: [0, 0], html: `<div class="molit-bldg">${esc(b.name)}<span>${esc(price)}</span></div>` }),
+    })
+      .bindPopup(molitPopup(b.name, `${b.type} 전월세`, b))
+      .addTo(map);
+  }
+}
+
 function esc(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
 }
@@ -78,7 +126,7 @@ function clusterIcon(L: L, n: number) {
   });
 }
 
-function drawBasemap(L: L, map: Leaflet.Map, features: Feature[]) {
+function drawBasemap(L: L, map: Leaflet.Map, features: Feature[], skipNames: Set<string>) {
   const renderer = L.canvas({ padding: 0.3 });
   const by: Record<string, Feature[]> = {};
   for (const f of features) (by[f.properties.k] ??= []).push(f);
@@ -97,7 +145,7 @@ function drawBasemap(L: L, map: Leaflet.Map, features: Feature[]) {
   for (const f of by.label ?? []) {
     const p = f.properties;
     const name = p.name === "삼척" ? "삼척역" : (p.name as string);
-    if (seen.has(name) || f.geometry.type !== "Point") continue;
+    if (seen.has(name) || f.geometry.type !== "Point" || skipNames.has(normName(name))) continue;
     seen.add(name);
     const [lon, lat] = f.geometry.coordinates;
     L.marker([lat, lon], {
@@ -180,13 +228,13 @@ export default function MapView({
       // 화면 폭이 바뀌어 지도 칸 크기가 달라지면 Leaflet에 다시 재게 한다(안 하면 빈 칸으로 남는다).
       resize = new ResizeObserver(() => map.invalidateSize());
       resize.observe(box.current);
-      try {
-        const res = await fetch("/data/basemap.geojson");
-        const gj = (await res.json()) as GeoJSON.FeatureCollection;
-        if (!cancelled) drawBasemap(L, map, gj.features as Feature[]);
-      } catch {
-        // 바탕 지도를 못 받아도 핀은 보이게 둔다.
-      }
+      const [gj, molit] = await Promise.all([
+        fetch("/data/basemap.geojson").then((r) => r.json() as Promise<GeoJSON.FeatureCollection>).catch(() => null),
+        fetch("/data/molit_layer.json").then((r) => r.json() as Promise<MolitLayer>).catch(() => null),
+      ]);
+      // 바탕 지도나 실거래 층을 못 받아도 핀은 보이게 둔다. 실거래 건물 이름표와 겹치는 바탕 이름표는 뺀다.
+      if (!cancelled && gj) drawBasemap(L, map, gj.features as Feature[], new Set(molit?.buildings.map((b) => normName(b.name)) ?? []));
+      if (!cancelled && molit) drawMolit(L, map, molit);
       setPins();
     })();
     return () => {
