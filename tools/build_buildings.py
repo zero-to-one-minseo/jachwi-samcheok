@@ -137,6 +137,11 @@ def main() -> int:
             continue
         y = int(r["built_year"])
         cands = [b for d in range(-YEAR_TOL, YEAR_TOL + 1) for b in by_road_year.get((base_road(r["road"]), y + d), [])]
+        # 국토부는 단독다가구 번지를 '2**'처럼 앞자리와 자릿수만 남기고 가린다. 같은 동·같은 모양의 본번만 남긴다.
+        mask = r["jibun"].strip()
+        if re.fullmatch(r"\d?\*+", mask):
+            pattern = re.compile("^" + mask.replace("*", r"\d") + "$")
+            cands = [b for b in cands if b["dong"] == r["dong"] and pattern.match(b["jibun"].split("-")[0])]
         exact = [b for b in cands if b["built"] == y]
         pick = exact if len(exact) == 1 else cands
         area = float(r["area_m2"]) if r["area_m2"] else None
