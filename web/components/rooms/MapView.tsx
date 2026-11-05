@@ -73,12 +73,24 @@ function molitPopup(title: string, what: string, s: MolitStat) {
   );
 }
 
+function roadTone(monthly: number, mid: number) {
+  if (monthly <= mid * 0.9) return "cheap";
+  if (monthly >= mid * 1.1) return "pricey";
+  return "";
+}
+
 function drawMolit(L: L, map: Leaflet.Map, layer: MolitLayer) {
+  const prices = layer.roads.map((r) => r.monthly).filter((m): m is number => m != null).sort((a, b) => a - b);
+  const mid = prices.length ? prices[Math.floor(prices.length / 2)] : 40;
   for (const r of layer.roads) {
     if (r.monthly == null) continue;
     L.marker([r.lat, r.lon], {
       keyboard: false,
-      icon: L.divIcon({ className: "label-icon", iconSize: [0, 0], html: `<div class="molit-road">${esc(r.name)} 원룸 <b>${r.monthly}만</b></div>` }),
+      icon: L.divIcon({
+        className: "label-icon",
+        iconSize: [0, 0],
+        html: `<div class="molit-road ${roadTone(r.monthly, mid)}">${esc(r.name)} 원룸 <b>${r.monthly}만</b></div>`,
+      }),
     })
       .bindPopup(molitPopup(`${r.name} 원룸 시세`, "원룸형 거래", r))
       .addTo(map);

@@ -81,20 +81,30 @@ body {
   display: none;
 }
 .molit-road {
+  /* 아이콘 칸 너비가 0이라, 글자 길이만큼 넓어지게 하지 않으면 바탕이 동그라미로 쪼그라든다. */
+  width: max-content;
   transform: translate(-50%, -50%);
   white-space: nowrap;
-  font: 700 11px var(--font-sans);
-  color: #0e5f66;
-  background: #fff;
-  border: 1.5px solid #0e7c86;
+  font: 700 12px var(--font-sans);
+  color: #fff;
+  background: #1c2228;
+  border: 2px solid #fff;
   border-radius: 999px;
-  padding: 2px 8px;
-  box-shadow: 0 1px 3px rgba(28, 34, 40, 0.18);
+  padding: 3px 9px;
+  box-shadow: 0 2px 5px rgba(28, 34, 40, 0.3);
   cursor: pointer;
 }
+.molit-road.cheap {
+  background: #23875a;
+}
+.molit-road.pricey {
+  background: #cf5f1f;
+}
 .molit-road b {
-  color: #1c2228;
   font-weight: 800;
+}
+.molit-bldg {
+  width: max-content;
 }
 .molit-bldg {
   transform: translate(-50%, -50%);
