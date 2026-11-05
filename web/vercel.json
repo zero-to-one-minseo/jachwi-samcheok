@@ -5,7 +5,7 @@
       "includeFiles": "api/_engine/**"
     },
     "api/chat.py": {
-      "maxDuration": 60,
+      "maxDuration": 120,
       "includeFiles": "api/_engine/**"
     }
   }

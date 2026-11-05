@@ -18,7 +18,10 @@ interface Result {
   building: { name: string; address: string; purpose: string; built: number; floors: number | null; households: number | null; deals: number } | null;
   building_candidates: number;
 }
-type Reply = { kind: "listing"; result: Result } | { kind: "contract" | "other" | "error"; message: string };
+interface Step { tool: string; detail: string }
+type Reply =
+  | { kind: "listing"; result: Result; steps: Step[]; summary: string }
+  | { kind: "contract" | "other" | "error"; message: string };
 type Msg = { id: number; role: "user"; text: string; image: string | null } | { id: number; role: "bot"; reply: Reply };
 
 const EXAMPLE =
@@ -146,7 +149,10 @@ export default function ChatApp() {
     try {
       const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body });
       const data = await res.json();
-      reply = data.ok ? (data.kind === "listing" ? { kind: "listing", result: data.result } : { kind: data.kind, message: data.message })
+      reply = data.ok
+        ? data.kind === "listing"
+          ? { kind: "listing", result: data.result, steps: data.steps ?? [], summary: data.summary ?? "" }
+          : { kind: data.kind, message: data.message }
         : { kind: "error", message: data.message ?? "잠시 뒤 다시 시도해 주세요." };
     } catch {
       reply = { kind: "error", message: "연결이 끊겼어요. 잠시 뒤 다시 시도해 주세요." };
@@ -178,7 +184,20 @@ export default function ChatApp() {
           ) : (
             <div key={m.id} className="max-w-[95%] rounded-2xl rounded-bl-sm border border-line bg-surface px-4 py-3">
               {m.reply.kind === "listing" ? (
-                <ResultCard r={m.reply.result} />
+                <div className="space-y-3">
+                  {m.reply.steps.length > 0 && (
+                    <ol className="space-y-1 rounded-lg bg-bg p-3 text-xs text-muted">
+                      <li className="font-bold text-ink">에이전트가 한 일</li>
+                      {m.reply.steps.map((s, i) => (
+                        <li key={i}>
+                          {i + 1}. <b className="text-ink">{s.tool}</b> · {s.detail}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  {m.reply.summary && <p className="text-[15px] leading-relaxed text-ink">{m.reply.summary}</p>}
+                  <ResultCard r={m.reply.result} />
+                </div>
               ) : (
                 <p className="text-[15px] text-ink">
                   {m.reply.message}{" "}
@@ -188,7 +207,7 @@ export default function ChatApp() {
             </div>
           ),
         )}
-        {busy && <p className="text-sm text-muted">매물 글을 읽고 실거래와 비교하는 중…</p>}
+        {busy && <p className="text-sm text-muted">에이전트가 건물을 찾고 건축물대장·실거래와 비교하는 중이에요(10~20초)…</p>}
         <div ref={end} />
       </div>
 

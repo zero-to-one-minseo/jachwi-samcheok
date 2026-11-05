@@ -21,7 +21,7 @@ if _API_DIR not in sys.path:
 import threading  # noqa: E402
 from datetime import date, datetime  # noqa: E402
 
-from _engine import compare, settings  # noqa: E402
+from _engine import agent, compare, settings  # noqa: E402
 
 MAX_BODY_BYTES = 4 * 1024 * 1024
 DAILY_LIMIT = 300
@@ -75,6 +75,13 @@ def process(body: bytes) -> tuple[int, dict[str, Any]]:
     if not COUNTER.try_take():
         return _err(429, "limit_reached", MSG_DAILY_LIMIT)
 
+    run = agent.run(text, image)
+    if run.get("status") == "ok":
+        if run["kind"] == "listing":
+            return 200, {"ok": True, "kind": "listing", "result": run["result"], "steps": run["steps"], "summary": run["summary"]}
+        if run["kind"] == "contract":
+            return 200, {"ok": True, "kind": "contract", "message": MSG_CONTRACT}
+    # 에이전트가 실패하거나 비교까지 못 가면, 한 번 읽고 코드로 비교하는 기본 길로 간다.
     status, listing = compare.extract(text, image)
     if status != "ok" or listing is None:
         code, http = STATUS_TO_CODE.get(status, ("api_error", 502))

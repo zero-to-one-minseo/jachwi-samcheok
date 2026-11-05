@@ -198,7 +198,8 @@ def peers(x: Listing) -> list[dict[str, Any]]:
     return out
 
 
-def judge(x: Listing) -> dict[str, Any]:
+def judge(x: Listing, live_building: dict[str, Any] | None = None) -> dict[str, Any]:
+    """live_building: 에이전트가 건축물대장에서 그 자리에서 찾은 건물(우리 표에 없을 때 쓴다)."""
     price, how = monthly_equiv(x)
     groups = peers(x)
     main = next((g for g in groups if g["stats"] and g["stats"]["n"] >= MIN_PEERS), None)
@@ -230,10 +231,12 @@ def judge(x: Listing) -> dict[str, Any]:
         checks.append("글 안에 AI에게 하는 지시처럼 보이는 문장이 있었어요. 따르지 않고 무시했어요.")
 
     b, n_cands = find_building(x)
+    if b is None and live_building:
+        b, n_cands = live_building, 1
     building = None
     if b:
         building = {k: b.get(k) for k in ("name", "address", "purpose", "built", "floors", "households", "deals")}
-        if x.built_year > 0 and abs(b["built"] - x.built_year) > 1:
+        if x.built_year > 0 and b.get("built") and abs(b["built"] - x.built_year) > 1:
             checks.append(f"글에는 {x.built_year}년 준공이라고 했지만 건축물대장 사용승인은 {b['built']}년이에요. 준공 연도를 확인하세요.")
         if "근린생활" in (b.get("purpose") or ""):
             checks.append("건축물대장 용도가 근린생활시설이에요. 주거용이 아니면 전입신고·확정일자에 문제가 생길 수 있으니 확인하세요.")
