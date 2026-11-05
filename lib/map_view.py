@@ -37,7 +37,7 @@ SEA = "#1A8A93"
 COLORS = {"cheap": "#23875A", "pricey": "#C65A1E", "neutral": "#ffffff"}
 TILES = "OpenStreetMap"
 # 바탕 지도의 색을 빼서 가격 핀이 먼저 보이게 한다(CARTO 밝은 지도는 API 키를 요구해서 쓰지 않는다).
-_TILE_CSS = "<style>.leaflet-tile-pane{filter:saturate(.45) brightness(1.14) contrast(.86);}</style>"
+_TILE_CSS = "<style>.leaflet-tile-pane{filter:grayscale(.8) brightness(1.2) contrast(.78);}</style>"
 # 이 확대부터는 묶지 않고 핀을 하나씩 보인다. 그 위에서 같은 자리 핀은 펼쳐서 보인다.
 CLUSTER_OFF_ZOOM = 17
 _CLUSTER_ICON = f"""
