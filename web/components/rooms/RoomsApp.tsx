@@ -62,7 +62,7 @@ export default function RoomsApp({ data }: { data: RoomsData }) {
         </div>
       </section>
 
-      <aside ref={panel} className="flex flex-col border-line bg-surface md:min-h-0 md:w-[420px] md:shrink-0 md:border-l">
+      <aside ref={panel} className="flex flex-col border-line bg-surface md:min-h-0 md:w-[240px] md:shrink-0 md:border-l">
         <Summary count={rooms.length} studentMid={studentMid} base={base} survey={showSurvey} resetable={filterCount(filters, top) > 0}
           onReset={() => { setFilters(emptyFilters(top)); setSelectedId(null); }} />
         <div className="flex-1 md:min-h-0 md:overflow-y-auto">
@@ -91,7 +91,7 @@ function Summary({ count, studentMid, base, survey, resetable, onReset }: {
   const molitBar = { label: "국토부 실거래", value: base?.monthly ?? null, color: survey ? "bg-line-strong" : "bg-sea" };
   const bars = survey ? [surveyBar, molitBar] : [molitBar, surveyBar];
   return (
-    <div className="border-b border-line px-5 pb-4 pt-5">
+    <div className="border-b border-line px-5 pb-4 pt-5 md:px-4">
       <div className="flex items-baseline justify-between">
         <h1 className="text-[22px] font-extrabold tracking-[-0.02em]">
           삼척 자취방 <span className="tabular">{count}</span>곳
@@ -104,8 +104,8 @@ function Summary({ count, studentMid, base, survey, resetable, onReset }: {
       </div>
       <div className="mt-4 space-y-2.5">
         {bars.map((b) => (
-          <div key={b.label} className="grid grid-cols-[96px_1fr_auto] items-center gap-3">
-            <span className="text-[13px] font-semibold text-muted">{b.label}</span>
+          <div key={b.label} className="grid grid-cols-[96px_1fr_auto] items-center gap-3 md:grid-cols-[80px_1fr_auto] md:gap-2">
+            <span className="whitespace-nowrap text-[13px] font-semibold text-muted">{b.label}</span>
             <div className="h-2.5 overflow-hidden rounded-full bg-bg">
               {b.value != null && <div className={`h-full rounded-full ${b.color}`} style={{ width: `${(b.value / max) * 100}%` }} />}
             </div>
@@ -130,7 +130,7 @@ function RoomList({ rooms, onPick }: { rooms: Room[]; onPick: (id: string) => vo
     <ul className="divide-y divide-line">
       {rooms.map((r) => (
         <li key={r.id}>
-          <button type="button" onClick={() => onPick(r.id)} className="block w-full px-5 py-4 text-left transition-colors hover:bg-bg">
+          <button type="button" onClick={() => onPick(r.id)} className="block w-full px-5 py-4 md:px-4 text-left transition-colors hover:bg-bg">
             <div className="flex items-center gap-2">
               <span className="tabular text-[19px] font-extrabold tracking-[-0.01em]">{r.headline}</span>
               {r.compare && <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${CHIP[r.compare.tone]}`}>{r.compare.chip}</span>}
@@ -150,7 +150,7 @@ function RoomList({ rooms, onPick }: { rooms: Room[]; onPick: (id: string) => vo
 
 function RoomDetail({ room, onBack }: { room: Room; onBack: () => void }) {
   return (
-    <div className="px-5 py-4">
+    <div className="px-5 py-4 md:px-4">
       <button type="button" onClick={onBack} className="mb-3 flex items-center gap-1 text-sm font-semibold text-muted hover:text-ink">
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.8" /></svg>
         목록으로
@@ -225,7 +225,7 @@ function Row({ term, icon, children }: { term: string; icon: keyof typeof ICON_P
 
 function Footer({ data }: { data: RoomsData }) {
   return (
-    <footer className="border-t border-line px-5 py-5 leading-relaxed">
+    <footer className="border-t border-line px-5 py-5 md:px-4 leading-relaxed">
       <p className="text-sm font-semibold text-sea">
         조사 {data.survey.when} · 출처: {data.survey.sources.join(", ")} · 국토교통부 실거래가 공개시스템 · 건축물대장
       </p>
