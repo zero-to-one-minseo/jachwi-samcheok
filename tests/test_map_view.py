@@ -1,6 +1,7 @@
 import unittest
 
 import folium
+from folium.plugins import MarkerCluster
 
 from lib import map_view
 from lib.rooms_data import load_rooms, visible_rooms
@@ -69,7 +70,8 @@ class RealDataTest(unittest.TestCase):
         placed = map_view.attach_coords(rooms, map_view.load_coords(), centers)
         self.assertEqual(len(placed), len(rooms))
         fmap = map_view.build_map(placed, {}, centers)
-        markers = [c for c in fmap._children.values() if isinstance(c, folium.Marker)]
+        layers = [fmap] + [c for c in fmap._children.values() if isinstance(c, MarkerCluster)]
+        markers = [c for layer in layers for c in layer._children.values() if isinstance(c, folium.Marker)]
         self.assertEqual(len(markers), len(placed) + len(centers))
 
 

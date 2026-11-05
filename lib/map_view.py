@@ -12,6 +12,7 @@ from typing import Any, Iterable
 
 import folium
 import streamlit as st
+from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 
 from lib.rooms_data import APP_DIR, compare_to_area
@@ -26,8 +27,28 @@ CHEAP_DIFF = -3.0
 PRICEY_DIFF = 3.0
 # 좌표를 약 100m(소수 셋째 자리)로 뭉갰으니, 겹친 점을 떼어 놓는 거리는 그보다 작게 둔다.
 JITTER_DEG = 0.00035
-BUBBLE_SIZE = (46, 24)
-COLORS = {"cheap": "#2e7d4f", "pricey": "#b85c00", "neutral": "#4f5866"}
+BUBBLE_SIZE = (54, 32)
+TAIL = 6
+INK = "#18222B"
+SEA = "#0E6C73"
+COLORS = {"cheap": "#23875A", "pricey": "#C65A1E", "neutral": "#ffffff"}
+TILES = "OpenStreetMap"
+# 바탕 지도의 색을 빼서 가격 핀이 먼저 보이게 한다(CARTO 밝은 지도는 API 키를 요구해서 쓰지 않는다).
+_TILE_CSS = "<style>.leaflet-tile-pane{filter:saturate(.25) brightness(1.06) contrast(.92);}</style>"
+# 이 확대부터는 묶지 않고 핀을 하나씩 보인다. 그 위에서 같은 자리 핀은 펼쳐서 보인다.
+CLUSTER_OFF_ZOOM = 17
+_CLUSTER_ICON = f"""
+function(cluster) {{
+  var n = cluster.getChildCount();
+  var s = n < 10 ? 34 : (n < 30 ? 40 : 46);
+  return L.divIcon({{
+    html: '<div style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;background:{SEA};color:#fff;'
+      + 'display:flex;align-items:center;justify-content:center;font:800 14px SUIT,sans-serif;'
+      + 'border:2px solid #fff;box-shadow:0 2px 6px rgba(24,34,43,.35);">' + n + '</div>',
+    className: '', iconSize: L.point(s, s)
+  }});
+}}
+"""
 LEGEND = {"cheap": "생활권 가운데 값보다 3만 원 넘게 쌈", "pricey": "3만 원 넘게 비쌈", "neutral": "비슷하거나 비교 못 함"}
 _TOOLTIP_ID = re.compile(r"\[(r\d+)\]\s*$")
 
@@ -147,21 +168,30 @@ def clicked_room_id(tooltip: str | None) -> str | None:
 
 
 def _bubble(label: str, tone: str, *, selected: bool, transfer: bool) -> str:
-    border = "2px dashed #ffffff" if transfer else "2px solid #ffffff"
+    """꼬리 달린 가격 핀. 꼬리 끝이 방 위치다."""
+    if selected:
+        bg, fg, edge, tail = INK, "#fff", INK, INK
+    elif tone == "neutral":
+        bg, fg, edge, tail = COLORS["neutral"], INK, INK, INK
+    else:
+        bg, fg, edge, tail = COLORS[tone], "#fff", "#fff", COLORS[tone]
+    border = f"2px {'dashed' if transfer else 'solid'} {edge}"
     size = "15px" if selected else "13px"
-    ring = "0 0 0 3px #1f2937," if selected else ""
     return (
-        f'<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;'
-        f"box-sizing:border-box;border-radius:12px;background:{COLORS[tone]};color:#fff;font-weight:700;"
-        f'font-size:{size};border:{border};box-shadow:{ring}0 1px 3px rgba(0,0,0,.35);white-space:nowrap;">'
-        f"{html.escape(label)}</div>"
+        '<div style="display:flex;flex-direction:column;align-items:center;width:100%;height:100%;">'
+        f'<div style="box-sizing:border-box;min-width:34px;height:{BUBBLE_SIZE[1] - TAIL}px;padding:0 7px;'
+        f"display:flex;align-items:center;justify-content:center;border-radius:8px;background:{bg};color:{fg};"
+        f"font:800 {size} SUIT,sans-serif;font-variant-numeric:tabular-nums;border:{border};"
+        f'box-shadow:0 2px 5px rgba(24,34,43,.28);white-space:nowrap;">{html.escape(label)}</div>'
+        f'<div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;'
+        f'border-top:{TAIL}px solid {tail};"></div></div>'
     )
 
 
 def _area_label(name: str) -> str:
     return (
-        '<div style="transform:translate(-50%,-50%);font-size:12px;font-weight:700;color:#374151;'
-        'background:rgba(255,255,255,.8);padding:1px 5px;border-radius:6px;white-space:nowrap;">'
+        f'<div style="transform:translate(-50%,-50%);font:700 11px SUIT,sans-serif;color:{SEA};'
+        'background:rgba(255,255,255,.85);padding:1px 6px;border-radius:6px;white-space:nowrap;">'
         f"{html.escape(name)}</div>"
     )
 
@@ -176,10 +206,20 @@ def build_map(
     zoom: int | None = None,
 ) -> folium.Map:
     start = start or centers.get(SCHOOL) or (37.4505, 129.1615)
-    m = folium.Map(location=list(start), zoom_start=zoom or DEFAULT_ZOOM, tiles="OpenStreetMap", control_scale=True)
+    m = folium.Map(location=list(start), zoom_start=zoom or DEFAULT_ZOOM, tiles=TILES, control_scale=True)
+    m.get_root().header.add_child(folium.Element(_TILE_CSS))
     for area, (lat, lon) in centers.items():
         text = "강원대 삼척캠퍼스" if area == SCHOOL else area
         folium.Marker([lat, lon], icon=folium.DivIcon(html=_area_label(text), icon_size=(0, 0))).add_to(m)
+    cluster = MarkerCluster(
+        icon_create_function=_CLUSTER_ICON,
+        options={
+            "maxClusterRadius": 42,
+            "disableClusteringAtZoom": CLUSTER_OFF_ZOOM,
+            "showCoverageOnHover": False,
+            "spiderfyOnMaxZoom": True,
+        },
+    ).add_to(m)
     for r in rooms:
         icon = folium.DivIcon(
             html=_bubble(
@@ -190,9 +230,11 @@ def build_map(
             ),
             # 크기가 0이면 지도가 누른 자리를 말풍선으로 알아보지 못한다.
             icon_size=BUBBLE_SIZE,
-            icon_anchor=(BUBBLE_SIZE[0] // 2, BUBBLE_SIZE[1] // 2),
+            icon_anchor=(BUBBLE_SIZE[0] // 2, BUBBLE_SIZE[1]),
         )
-        folium.Marker([r["lat"], r["lon"]], icon=icon, tooltip=html.escape(tooltip_text(r))).add_to(m)
+        marker = folium.Marker([r["lat"], r["lon"]], icon=icon, tooltip=html.escape(tooltip_text(r)))
+        # 고른 방은 묶음에 숨지 않게 지도에 바로 올린다.
+        marker.add_to(m if r.get("id") == selected_id else cluster)
     return m
 
 
@@ -228,5 +270,7 @@ def render_map(
     return clicked_room_id(tooltip)
 
 
-def legend_markdown() -> str:
-    return "  \n".join(f"{name}: {text}" for name, text in [("초록", LEGEND["cheap"]), ("주황", LEGEND["pricey"]), ("회색", LEGEND["neutral"]), ("점선 테두리", "양도 매물")])
+def legend_html() -> str:
+    items = [("cheap", LEGEND["cheap"]), ("pricey", LEGEND["pricey"]), ("neutral", LEGEND["neutral"]),
+             ("transfer", "점선은 양도 글"), ("cluster", "동그라미는 묶인 방 수, 누르면 확대")]
+    return '<div class="legend">' + "".join(f'<span><i class="{k}"></i>{html.escape(t)}</span>' for k, t in items) + "</div>"

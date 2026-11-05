@@ -3,3 +3,28 @@ maxUploadSize = 20
 
 [runner]
 magicEnabled = false
+
+[theme]
+base = "light"
+primaryColor = "#0E6C73"
+backgroundColor = "#F6F7F5"
+secondaryBackgroundColor = "#E9EEEC"
+textColor = "#18222B"
+borderColor = "#D3DBD8"
+linkColor = "#0E6C73"
+greenColor = "#23875A"
+orangeColor = "#C65A1E"
+blueColor = "#0E6C73"
+font = "SUIT, sans-serif"
+headingFont = "SUIT, sans-serif"
+headingFontWeights = [800, 700, 700, 600, 600, 600]
+baseRadius = "0.6rem"
+buttonRadius = "0.6rem"
+paddingTop = "1.5rem"
+metricValueFontSize = "1.6rem"
+metricValueFontWeight = 800
+
+[[theme.fontFaces]]
+family = "SUIT"
+url = "https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2.0.5/fonts/variable/woff2/SUIT-Variable.woff2"
+weight = "100 900"
