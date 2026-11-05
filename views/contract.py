@@ -235,6 +235,17 @@ def _clear_all() -> None:
     st.session_state[K_GEN] = st.session_state.get(K_GEN, 0) + 1
 
 
+def _use_sample(name: str) -> None:
+    """개발·리허설용: 가상 샘플 파일을 올린 것처럼 준비하고 바로 실제 분석을 요청한다(?dev=1에서만 보인다)."""
+    _clear_all()
+    path = SAMPLES_DIR / name
+    state = st.session_state
+    state[K_PREPARED] = prepare_upload(path.read_bytes(), path.name)
+    state[K_FILE_ID] = f"sample:{name}"
+    state[K_FILE_NAME] = name
+    _request_analysis()
+
+
 # ---------- 화면 조각 ----------
 
 
@@ -418,6 +429,11 @@ def page() -> None:
         disabled=requested,
     )
     _render_notices()
+    if dev:
+        with st.container(horizontal=True):
+            for sample in ("sample_a.jpg", "sample_y.jpg"):
+                st.button(f"{sample} 실제 분석(개발용)", key=f"contract_dev_{sample}", on_click=_use_sample,
+                          args=(sample,), disabled=requested)
     _prepare_if_new(uploaded)
     prepared: PreparedFile | None = state.get(K_PREPARED)
     _render_preview(prepared)
