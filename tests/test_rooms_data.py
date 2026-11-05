@@ -288,7 +288,7 @@ class RoomsPageTest(unittest.TestCase):
         self.assertEqual(at.title[0].value, "삼척 자취방 시세")
         self.assertFalse(at.error)
         self.assertGreater(len(at.button), 10)
-        self.assertEqual(self.metric("공공데이터 기준선"), "준비 중")
+        self.assertEqual(self.metric("공공데이터 기준선"), "월 40만 원")
         texts = " ".join(m.value for m in at.markdown)
         self.assertIn("실제 매물 여부는 연락해서 확인하세요", texts)
         self.assertNotRegex(texts, r"https?://|01[016789]-\d{3,4}-\d{4}")
