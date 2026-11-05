@@ -170,7 +170,9 @@ def road_candidates(r: dict, by_road_year: dict[tuple[str, int], list[dict]]) ->
         # 다가구는 연면적 ÷ 가구 수가 방 한 칸의 평균 크기에 가깝다. 거래 면적과 맞는 건물만 남긴다.
         sized = [b for b in cands if b["households"] and b["area_total"]
                  and abs(b["area_total"] / b["households"] - area) / area <= UNIT_AREA_TOL]
-        if sized:
+        # 평균 크기는 방마다 다를 수 있는 약한 단서라, 같은 준공 연도 후보를 모두 빼고 다른 해 건물만 남기지는 않는다.
+        keeps_year = any(b["built"] == y for b in sized) or not any(b["built"] == y for b in cands)
+        if sized and keeps_year:
             cands = sized
             steps.append((cands, "size"))
     return steps
@@ -224,8 +226,11 @@ def match(deals: list[dict], buildings: list[dict], cache: dict, addrs: dict[str
             def fits(b: dict) -> bool | None:
                 sizes = unit_sizes(b, cache["floors"])
                 return any(abs(u - area) / area <= FLOOR_UNIT_TOL for u in sizes) if sizes else None
+            # 면적 단서로 같은 준공 연도 후보를 모두 빼고 다른 해 건물만 남기지도 않는다.
             fit = [b for b in cands if fits(b) is not False]
-            if fit and len(fit) < len(cands) and any(fits(b) for b in fit):
+            y = int(r["built_year"])
+            keeps_year = any(b["built"] == y for b in fit) or not any(b["built"] == y for b in cands)
+            if fit and len(fit) < len(cands) and any(fits(b) for b in fit) and keeps_year:
                 s.append((fit, "floor"))
                 cands = fit
         if len(cands) > 1 and s[-1][1] != "jibun":
