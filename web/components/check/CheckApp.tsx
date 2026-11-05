@@ -124,7 +124,7 @@ export default function CheckApp({ rooms }: { rooms: Room[] }) {
         </div>
       )}
 
-      <h1 className="text-[28px] font-extrabold tracking-[-0.02em] md:text-[34px]">계약서 점검</h1>
+      <h1 className="text-[28px] font-extrabold tracking-[-0.02em] md:text-[34px]">계약서 검사</h1>
 
       <section className="mt-6 rounded-2xl border border-line bg-surface p-5 md:p-6">
         <label

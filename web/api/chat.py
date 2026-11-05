@@ -54,7 +54,7 @@ MAX_TEXT = 4000
 MSG_EMPTY = "비교할 매물 글을 붙여넣거나 캡처 사진을 올려 주세요."
 MSG_FAIL = "매물 정보를 읽지 못했어요. 잠시 뒤 다시 시도해 주세요."
 MSG_NOT_LISTING = "매물 정보가 보이지 않아요. 가격·보증금·위치가 적힌 글이나 캡처를 올려 주세요."
-MSG_CONTRACT = "계약서로 보여요. 계약서는 '계약서 점검'에서 조항까지 확인할 수 있어요."
+MSG_CONTRACT = "계약서로 보여요. 계약서는 '계약서 검사'에서 조항까지 확인할 수 있어요."
 
 
 def _err(status: int, code: str, message: str) -> tuple[int, dict[str, Any]]:

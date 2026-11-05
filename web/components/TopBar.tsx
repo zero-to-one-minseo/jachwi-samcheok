@@ -7,9 +7,9 @@ import { useSyncExternalStore } from "react";
 const noSubscribe = () => () => {};
 
 const TABS = [
-  { href: "/", label: "시세 지도" },
+  { href: "/", label: "평균 시세" },
   { href: "/chat", label: "매물 비교" },
-  { href: "/check", label: "계약서 점검" },
+  { href: "/check", label: "계약서 검사" },
 ];
 
 export default function TopBar() {

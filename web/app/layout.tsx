@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "자취학과 · 삼척 자취방",
-  description: "삼척 학생들이 직접 모은 자취방 시세 지도와, 계약서를 올리면 확인할 조항을 짚어 주는 점검.",
+  description: "삼척 자취방 평균 시세, 매물 비교, 계약서 검사.",
 };
 
 export const viewport: Viewport = {

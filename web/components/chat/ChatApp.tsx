@@ -128,7 +128,7 @@ export default function ChatApp() {
     setNote("");
     try {
       const p = await prepareFile(file);
-      if (p.kind !== "image") throw new UploadError("캡처 사진만 올릴 수 있어요. 계약서 PDF는 '계약서 점검'에서 올려 주세요.");
+      if (p.kind !== "image") throw new UploadError("캡처 사진만 올릴 수 있어요. 계약서 PDF는 '계약서 검사'에서 올려 주세요.");
       setImage({ b64: p.b64, url: p.previewUrl ?? "" });
     } catch (e) {
       setNote(e instanceof UploadError ? e.message : "사진을 준비하지 못했어요.");
@@ -196,7 +196,7 @@ export default function ChatApp() {
               ) : (
                 <p className="text-[15px] text-ink">
                   {m.reply.message}{" "}
-                  {m.reply.kind === "contract" && <Link href="/check" className="font-bold text-sea underline">계약서 점검으로 가기</Link>}
+                  {m.reply.kind === "contract" && <Link href="/check" className="font-bold text-sea underline">계약서 검사로 가기</Link>}
                 </p>
               )}
             </div>

@@ -197,7 +197,7 @@ function RoomDetail({ room, onBack }: { room: Room; onBack: () => void }) {
         href={`/check?room=${room.id}`}
         className="mt-5 flex w-full items-center justify-center rounded-xl bg-sea px-4 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-[#0b6a73]"
       >
-        이 방 계약서 점검하기
+        이 방 계약서 검사하기
       </Link>
     </div>
   );
