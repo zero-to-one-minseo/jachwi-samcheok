@@ -50,7 +50,7 @@ h1 {{ letter-spacing: -0.02em; }}
 .legend i.pricey {{ background: {PRICEY}; }}
 .legend i.neutral {{ background: #fff; border: 1.5px solid {INK}; }}
 .legend i.transfer {{ background: #fff; border: 1.5px dashed {INK}; }}
-.legend i.cluster {{ background: {SEA}; border-radius: 50%; }}
+.legend i.cluster {{ background: #1A8A93; border-radius: 50%; }}
 </style>
 """
 

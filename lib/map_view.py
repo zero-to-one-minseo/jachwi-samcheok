@@ -23,6 +23,9 @@ CENTERS_CSV = APP_DIR / "data" / "area_centers.csv"
 SCHOOL = "학교"
 DEFAULT_ZOOM = 15
 SELECTED_ZOOM = 17
+MIN_ZOOM = 14
+# 삼척 시내와 캠퍼스 둘레. 지도를 이 밖으로 끌거나 더 멀리 축소하지 못하게 한다(도계·근덕 방은 목록에만 보인다).
+CITY_BOUNDS = {"min_lat": 37.425, "max_lat": 37.468, "min_lon": 129.135, "max_lon": 129.195}
 CHEAP_DIFF = -3.0
 PRICEY_DIFF = 3.0
 # 좌표를 약 100m(소수 셋째 자리)로 뭉갰으니, 겹친 점을 떼어 놓는 거리는 그보다 작게 둔다.
@@ -30,11 +33,11 @@ JITTER_DEG = 0.00035
 BUBBLE_SIZE = (54, 32)
 TAIL = 6
 INK = "#18222B"
-SEA = "#0E6C73"
+SEA = "#1A8A93"
 COLORS = {"cheap": "#23875A", "pricey": "#C65A1E", "neutral": "#ffffff"}
 TILES = "OpenStreetMap"
 # 바탕 지도의 색을 빼서 가격 핀이 먼저 보이게 한다(CARTO 밝은 지도는 API 키를 요구해서 쓰지 않는다).
-_TILE_CSS = "<style>.leaflet-tile-pane{filter:saturate(.25) brightness(1.06) contrast(.92);}</style>"
+_TILE_CSS = "<style>.leaflet-tile-pane{filter:saturate(.45) brightness(1.14) contrast(.86);}</style>"
 # 이 확대부터는 묶지 않고 핀을 하나씩 보인다. 그 위에서 같은 자리 핀은 펼쳐서 보인다.
 CLUSTER_OFF_ZOOM = 17
 _CLUSTER_ICON = f"""
@@ -206,7 +209,10 @@ def build_map(
     zoom: int | None = None,
 ) -> folium.Map:
     start = start or centers.get(SCHOOL) or (37.4505, 129.1615)
-    m = folium.Map(location=list(start), zoom_start=zoom or DEFAULT_ZOOM, tiles=TILES, control_scale=True)
+    m = folium.Map(
+        location=list(start), zoom_start=zoom or DEFAULT_ZOOM, tiles=TILES, control_scale=True,
+        min_zoom=MIN_ZOOM, max_bounds=True, max_bounds_viscosity=1.0, **CITY_BOUNDS,
+    )
     m.get_root().header.add_child(folium.Element(_TILE_CSS))
     for area, (lat, lon) in centers.items():
         text = "강원대 삼척캠퍼스" if area == SCHOOL else area
