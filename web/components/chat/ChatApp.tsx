@@ -48,6 +48,22 @@ function readChips(l: Record<string, unknown>): string[] {
   ].filter(Boolean) as string[];
 }
 
+// 에이전트 요약은 문장마다 줄을 바꾸고 판정·숫자만 **굵게** 쓴다. 그 두 가지만 화면에 살린다.
+function Summary({ text }: { text: string }) {
+  const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  return (
+    <div className="space-y-2 text-[16px] leading-relaxed text-ink">
+      {lines.map((line, i) => (
+        <p key={i}>
+          {line.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
+            part.startsWith("**") && part.endsWith("**") ? <strong key={j} className="font-extrabold">{part.slice(2, -2)}</strong> : part,
+          )}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function ResultCard({ r }: { r: Result }) {
   const main = r.main?.stats;
   return (
@@ -180,17 +196,7 @@ export default function ChatApp() {
             <div key={m.id} className="max-w-[95%] rounded-2xl rounded-bl-sm border border-line bg-surface px-4 py-3">
               {m.reply.kind === "listing" ? (
                 <div className="space-y-3">
-                  {m.reply.steps.length > 0 && (
-                    <ol className="space-y-1 rounded-lg bg-bg p-3 text-xs text-muted">
-                      <li className="font-bold text-ink">에이전트가 한 일</li>
-                      {m.reply.steps.map((s, i) => (
-                        <li key={i}>
-                          {i + 1}. <b className="text-ink">{s.tool}</b> · {s.detail}
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                  {m.reply.summary && <p className="text-[15px] leading-relaxed text-ink">{m.reply.summary}</p>}
+                  {m.reply.summary && <Summary text={m.reply.summary} />}
                   <ResultCard r={m.reply.result} />
                 </div>
               ) : (
