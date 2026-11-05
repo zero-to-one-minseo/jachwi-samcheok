@@ -70,6 +70,34 @@ def market() -> dict[str, Any]:
     return json.loads(MARKET_PATH.read_text(encoding="utf-8"))
 
 
+BUILDINGS_PATH = MARKET_PATH.parent / "buildings.json"
+
+
+@lru_cache(maxsize=1)
+def buildings() -> list[dict[str, Any]]:
+    """건축물대장의 시내 주거용 건물(tools/build_buildings.py). 파일이 없으면 빈 목록."""
+    try:
+        return json.loads(BUILDINGS_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+
+
+def find_building(x: "Listing") -> tuple[dict[str, Any] | None, int]:
+    """(찾은 건물, 후보 수). 이름이 맞으면 그 건물, 아니면 같은 길·같은 준공 연도 건물이 하나일 때만."""
+    key = _norm(x.name)
+    if len(key) >= 2:
+        named = [b for b in buildings() if len(_norm(b["name"])) >= 2 and (key in _norm(b["name"]) or _norm(b["name"]) in key)
+                 and (not x.road or b["road"] == x.road)]
+        if len(named) == 1:
+            return named[0], 1
+    if x.road and x.built_year > 0:
+        same = [b for b in buildings() if b["road"] == x.road and b["built"] == x.built_year]
+        if len(same) == 1:
+            return same[0], 1
+        return None, len(same)
+    return None, 0
+
+
 def _norm(name: str) -> str:
     return re.sub(r"\s|\(.*?\)|원룸|빌라|주택|아파트", "", name or "")
 
@@ -143,6 +171,12 @@ def peers(x: Listing) -> list[dict[str, Any]]:
         if same:
             out.append({"label": f"{x.name} 실거래", "basis": "국토부 실거래(같은 건물 이름)", "stats": _stats(same)})
 
+    b, _ = find_building(x)
+    if b and b.get("deals") and b.get("monthly") is not None:
+        out.append({"label": f"{b['name'] or b['address']} 실거래(추정)",
+                    "basis": "국토부 실거래를 길·준공 연도로 이 건물에 맞춘 추정",
+                    "stats": {"n": b["deals"], "median": b["monthly"], "low": b["monthly"], "high": b["monthly"]}})
+
     if x.road and x.built_year > 0:
         guess = [r["monthly"] for r in rows if r["roomlike"] and r["road"] == x.road and r["built"]
                  and abs(r["built"] - x.built_year) <= 1 and (area is None or (r["area"] and abs(r["area"] - area) <= AREA_TOL_BUILDING))]
@@ -195,5 +229,14 @@ def judge(x: Listing) -> dict[str, Any]:
     if x.hidden_instruction == "있음":
         checks.append("글 안에 AI에게 하는 지시처럼 보이는 문장이 있었어요. 따르지 않고 무시했어요.")
 
+    b, n_cands = find_building(x)
+    building = None
+    if b:
+        building = {k: b.get(k) for k in ("name", "address", "purpose", "built", "floors", "households", "deals")}
+        if x.built_year > 0 and abs(b["built"] - x.built_year) > 1:
+            checks.append(f"글에는 {x.built_year}년 준공이라고 했지만 건축물대장 사용승인은 {b['built']}년이에요. 준공 연도를 확인하세요.")
+        if "근린생활" in (b.get("purpose") or ""):
+            checks.append("건축물대장 용도가 근린생활시설이에요. 주거용이 아니면 전입신고·확정일자에 문제가 생길 수 있으니 확인하세요.")
+
     return {"price": price, "price_how": how, "verdict": verdict, "diff": diff, "main": main, "groups": groups,
-            "checks": checks, "listing": x.model_dump()}
+            "checks": checks, "listing": x.model_dump(), "building": building, "building_candidates": n_cands}

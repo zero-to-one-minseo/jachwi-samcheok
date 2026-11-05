@@ -15,6 +15,8 @@ interface Result {
   groups: Group[];
   checks: string[];
   listing: Record<string, unknown>;
+  building: { name: string; address: string; purpose: string; built: number; floors: number | null; households: number | null; deals: number } | null;
+  building_candidates: number;
 }
 type Reply = { kind: "listing"; result: Result } | { kind: "contract" | "other" | "error"; message: string };
 type Msg = { id: number; role: "user"; text: string; image: string | null } | { id: number; role: "bot"; reply: Reply };
@@ -59,6 +61,21 @@ function ResultCard({ r }: { r: Result }) {
           {r.diff != null && r.diff !== 0 && <> 이라 <b>{Math.abs(r.diff)}만 {r.diff > 0 ? "비싸요" : "싸요"}</b></>}
           {r.diff === 0 && <> 과 같아요</>}.
         </p>
+      )}
+      {r.building && (
+        <div className="rounded-lg border border-line p-3 text-sm">
+          <p className="font-bold text-ink">
+            건축물대장으로 찾은 건물: {r.building.name || r.building.address}
+          </p>
+          <p className="text-muted">
+            {r.building.address} · {r.building.purpose} · {r.building.built}년 사용승인
+            {r.building.floors ? ` · 지상 ${r.building.floors}층` : ""}
+            {r.building.households ? ` · ${r.building.households}가구` : ""}
+          </p>
+        </div>
+      )}
+      {!r.building && r.building_candidates > 1 && (
+        <p className="text-sm text-muted">같은 길·같은 준공 연도 건물이 {r.building_candidates}곳이라 한 건물로 좁히지 못했어요.</p>
       )}
       {r.groups.length > 0 && (
         <ul className="space-y-1 rounded-lg bg-bg p-3 text-sm">
