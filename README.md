@@ -1,14 +1,21 @@
 # 자취학과
 
-삼척 학생용 웹앱. 두 기능이 한 흐름으로 이어진다.
+삼척 대학생이 자취방을 구할 때 치르는 숨은 비용(시간·수고·돈·불안)을 줄이는 웹앱. 다른 곳에서 본 방이 비싼지, 어떤 건물인지, 계약 전에 무엇을 확인해야 하는지를 공공데이터로 알려 준다.
 
-1. **삼척 자취방 시세 현황판**: 팀이 모은 방 정보를 생활권·월 환산·계약 방식으로 걸러 본다.
-2. **계약서 점검**: 방 카드의 '계약 전에 계약서 점검하기'를 누르면 넘어온다. 계약서 사진이나 PDF를 올리면 Claude가 조항을 읽고, 코드가 기준 목록의 근거와 규칙을 붙여 주의/확인 필요/괜찮음 카드와 집주인에게 물을 질문을 만든다.
+- **배포 주소:** https://jachwi-samcheok.vercel.app (Next.js + Vercel, 폴더 `web/`). 예전 Streamlit 판(https://jachwi-samcheok.streamlit.app, `app.py`)은 비상용이다.
+- **화면 세 개**
+  1. **시세 지도:** 국토부 전월세 실거래 3년치로 길별 원룸 평균 시세와 건물 이름표를 지도에 표시한다. 팀이 조사한 학생 방은 단추로 바꿔 본다.
+  2. **매물 비교(에이전트):** 다른 곳에서 본 매물 글이나 캡처를 넣으면 Claude가 도구를 스스로 골라 쓴다(건물 찾기 → 건축물대장 조회 → 시세 비교). 등급과 확인할 점은 코드가 정한다(`web/api/chat.py`, `web/api/_engine/agent.py`, `compare.py`, `live.py`).
+  3. **계약서 점검:** 계약서 사진·PDF를 Claude가 읽고 확인 기준을 고르면, 코드가 등급·법 근거·집주인 질문을 붙인다(`web/api/analyze.py`).
+- **원칙:** AI는 글과 사진을 읽어 정해진 칸에 옮기기만 하고, 비교·판단·등급은 코드가 한다. 같은 입력이면 같은 결과가 나온다.
+- **외부 데이터(공공데이터)**
+  - 국토교통부 실거래가 공개시스템: 삼척시 전월세 3년치 2,111건(`data/molit_rent.csv`)
+  - 행정안전부 도로명주소 검색 API: 길별 건물 목록과 지번
+  - 국토교통부 건축HUB 건축물대장(표제부·층별개요): 용도, 사용승인 연도, 층수, 가구 수(`data/buildings.csv`)
+  - OpenStreetMap: 바탕 지도, 길 위치
+- **건물 추정:** 국토부는 단독다가구 거래의 번지를 가린다. 그래서 같은 길, 준공 연도, 가려진 번지 앞자리, 방 크기(연면적÷가구 수, 층별개요)로 건물을 '추정'한다. 공개 파일에는 거래 3건 이상인 건물의 가운데 값만 싣고, 지번·거래 기간·거래 면적은 싣지 않는다.
 
 법률 자문이 아니라 확인 체크리스트다.
-
-- **배포 주소:** https://jachwi-samcheok.streamlit.app (공개, Streamlit Community Cloud, `main`의 `app.py`)
-- **외부 데이터:** 국토교통부 삼척시 전월세 실거래 1년치(`data/baseline_molit.csv`). 현황판의 '공공데이터 기준선'이 된다.
 
 ## 실행 (로컬)
 
@@ -89,7 +96,11 @@ tests/                  unittest 시험
 
    필수 칸이 빠진 CSV가 있으면 빠진 칸 이름을 말하고 종료 코드 1로 끝난다. 전화번호·글 주소·호수·카톡 구절은 정리본에서 지워지고, 출처는 짧은 이름만 남는다.
 3. 앱은 rooms.csv의 수정 시각을 보고 알아서 다시 읽는다. 서버를 다시 켤 필요는 없다.
-4. 공공데이터 기준선은 `data/baseline_molit.csv`다. 국토부 실거래가 공개시스템(rt.molit.go.kr) '조건별 자료제공'에서 강원특별자치도 삼척시, 전월세, 단독/다가구·연립/다세대·오피스텔을 1년 범위로 받아 필요한 칸만 남겼다(출처와 기간은 파일 맨 위 두 줄). 새로 받으면 같은 칸 이름으로 덮어쓴다. 읽는 쪽은 앞의 설명 줄을 건너뛰고 칸 이름으로 찾으며, UTF-8과 CP949를 모두 읽는다.
+4. 국토부 실거래는 rt.molit.go.kr '조건별 자료제공'에서 1년씩 받은 원본(`data/raw/molit3y/`, git 제외)을 정리해 쓴다. 순서는 아래와 같다.
+   - `tools/build_molit.py` → `data/molit_rent.csv`
+   - `tools/build_molit_layer.py` → 지도 층(`web/public/data/molit_layer.json`), 비교용 자료(`web/api/_engine/data/market.json`)
+   - `tools/build_buildings.py`(열쇠: `.streamlit/secrets.toml`의 `JUSO_SEARCH_KEY`, `DATA_GO_KR_KEY`) → `data/buildings.csv`, `web/api/_engine/data/buildings.json`
+   - 시세 현황판의 공공데이터 기준선(`data/baseline_molit.csv`)은 `molit_rent.csv`에서 아파트를 뺀 것이다.
 
 기준 목록을 바꾸면 `criteria.csv`만 덮어쓰면 된다. 매 실행 다시 읽고, 칸 이름·번호에 문제가 있으면 계약서 화면이 오류를 띄우고 분석을 막는다.
 
