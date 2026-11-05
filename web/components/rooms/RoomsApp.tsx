@@ -102,7 +102,6 @@ function Summary({ count, studentMid, base, resetable, onReset }: {
           </button>
         )}
       </div>
-      <p className="mt-1 text-[13px] text-muted">직방에 잘 안 뜨는 방, 학생들이 직접 모은 값이에요. 월 환산 가운데 값을 비교해요.</p>
       <div className="mt-4 space-y-2.5">
         {bars.map((b) => (
           <div key={b.label} className="grid grid-cols-[96px_1fr_auto] items-center gap-3">
@@ -114,7 +113,7 @@ function Summary({ count, studentMid, base, resetable, onReset }: {
           </div>
         ))}
       </div>
-      <p className="mt-2 text-xs text-muted">
+      <p className="mt-3 text-[13px] font-semibold text-sea">
         {base
           ? `국토교통부 전월세 실거래 ${base.count}건(40㎡ 이하 월세) · ${base.label} · ${base.period}`
           : "고른 생활권에는 국토부 실거래가 없어요."}
@@ -163,19 +162,18 @@ function RoomDetail({ room, onBack }: { room: Room; onBack: () => void }) {
         <p className={`mt-3 inline-block rounded-lg px-2.5 py-1 text-sm font-semibold ${CHIP[room.compare.tone]}`}>{room.compare.text}</p>
       )}
       <dl className="mt-4 space-y-3 text-[15px]">
-        <Row term="위치">
+        <Row term="위치" icon="pin">
           {room.precise ? (
             <>
               {room.placeName} · {room.address}
-              <span className="mt-0.5 block text-xs text-muted">네이버 지역 검색으로 찾은 건물 위치예요.</span>
             </>
           ) : (
-            <span className="text-muted">건물을 특정할 수 없어 길·생활권 단위 대략 위치로 찍었어요.</span>
+            <>{room.area} 일대</>
           )}
         </Row>
-        <Row term="돈">{room.priceLine}</Row>
-        <Row term="포함">{room.includedLine}</Row>
-        {room.detailLine && <Row term="방">{room.detailLine}</Row>}
+        <Row term="돈" icon="coin">{room.priceLine}</Row>
+        <Row term="포함" icon="check">{room.includedLine}</Row>
+        {room.detailLine && <Row term="방" icon="home">{room.detailLine}</Row>}
       </dl>
       {room.transferNote && (
         <div className="mt-4 rounded-lg border border-pricey/30 bg-pricey-soft px-3.5 py-3 text-sm text-ink">
@@ -194,22 +192,32 @@ function RoomDetail({ room, onBack }: { room: Room; onBack: () => void }) {
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M5 2h7v7M12 2 5.5 8.5M10 9v3H2V4h3" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
         </a>
       )}
-      <p className="mt-4 text-xs text-muted">{room.sourceLine}</p>
+      <p className="mt-4 text-sm font-semibold text-sea">{room.sourceLine}</p>
       <Link
         href={`/check?room=${room.id}`}
         className="mt-5 flex w-full items-center justify-center rounded-xl bg-sea px-4 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-[#0b6a73]"
       >
         이 방 계약서 점검하기
       </Link>
-      <p className="mt-2 text-center text-xs text-muted">계약서 사진을 올리면 확인할 조항과 집주인에게 물을 질문을 짚어 줘요.</p>
     </div>
   );
 }
 
-function Row({ term, children }: { term: string; children: React.ReactNode }) {
+const ICON_PATHS: Record<"pin" | "coin" | "check" | "home", React.ReactNode> = {
+  pin: <path d="M10 18s-5.5-5.2-5.5-9.2a5.5 5.5 0 0 1 11 0C15.5 12.8 10 18 10 18Zm0-7.2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />,
+  coin: <><circle cx="10" cy="10" r="7" /><path d="M7 7.5l1.4 5 1.6-4 1.6 4 1.4-5M6.5 10h7" /></>,
+  check: <><rect x="3.5" y="3.5" width="13" height="13" rx="3" /><path d="m6.8 10.2 2.2 2.2 4.3-4.6" /></>,
+  home: <path d="M3.5 9.5 10 4l6.5 5.5V16a.5.5 0 0 1-.5.5h-3.5v-4h-5v4H4a.5.5 0 0 1-.5-.5V9.5Z" />,
+};
+
+function Row({ term, icon, children }: { term: string; icon: keyof typeof ICON_PATHS; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[40px_1fr] gap-3">
-      <dt className="text-sm font-bold text-muted">{term}</dt>
+    <div className="grid grid-cols-[64px_1fr] gap-3">
+      <dt className="flex items-center gap-1.5 text-sm font-bold text-ink">
+        <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.7"
+          strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-sea">{ICON_PATHS[icon]}</svg>
+        {term}
+      </dt>
       <dd>{children}</dd>
     </div>
   );
@@ -217,13 +225,11 @@ function Row({ term, children }: { term: string; children: React.ReactNode }) {
 
 function Footer({ data }: { data: RoomsData }) {
   return (
-    <footer className="border-t border-line px-5 py-5 text-xs leading-relaxed text-muted">
-      <p>조사 {data.survey.when} · 출처: {data.survey.sources.join(", ")}</p>
-      <p className="mt-1">
-        팀원이 글을 직접 읽고 숫자와 조건만 옮겼어요. 연락처, 호수, 글 주소는 싣지 않았어요. 선세·연세는 개월 수로 나눈 월 환산으로 비교하고, 양도 글은
-        생활권 가운데 값에서 뺐어요. 건물 이름이 분명한 방은 네이버 지역 검색으로 찾은 건물 위치이고, 나머지는 길·생활권 단위 대략 위치예요.
+    <footer className="border-t border-line px-5 py-5 leading-relaxed">
+      <p className="text-sm font-semibold text-sea">
+        조사 {data.survey.when} · 출처: {data.survey.sources.join(", ")} · 국토교통부 실거래가 공개시스템 · 건축물대장
       </p>
-      <p className="mt-2 font-bold text-ink">실제 매물 여부는 연락해서 확인하세요.</p>
+      <p className="mt-2 text-sm font-bold text-ink">실제 매물 여부는 연락해서 확인하세요.</p>
     </footer>
   );
 }
