@@ -87,7 +87,7 @@ function Summary({ count, studentMid, base, resetable, onReset }: {
 }) {
   const max = Math.max(studentMid ?? 0, base?.monthly ?? 0, 1);
   const bars = [
-    { label: "학생들이 모은 값", value: studentMid, color: "bg-sea" },
+    { label: "학생 조사 방", value: studentMid, color: "bg-sea" },
     { label: "국토부 실거래", value: base?.monthly ?? null, color: "bg-line-strong" },
   ];
   return (
