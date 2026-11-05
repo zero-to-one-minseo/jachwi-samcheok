@@ -106,7 +106,7 @@ function ResultCard({ r }: { r: Result }) {
           <span key={c} className="rounded-md border border-line px-1.5 py-0.5 text-xs text-ink">{c}</span>
         ))}
       </div>
-      <p className="text-sm font-semibold text-sea">출처: 국토교통부 전월세 실거래(삼척, 2023.11~2026.11) · 건축물대장 · 학생 조사</p>
+      <p className="text-sm font-semibold text-sea">출처: 국토교통부 전월세 실거래(삼척, 2023.11~2026.11) · 건축물대장 · 직접 조사</p>
     </div>
   );
 }

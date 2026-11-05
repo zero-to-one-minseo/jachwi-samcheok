@@ -15,6 +15,7 @@ const MIN_ZOOM = 14;
 const MAX_ZOOM = 18;
 const START_ZOOM = 15;
 const PICK_ZOOM = 17;
+const PRICE_ZOOM = 16;
 const DETAIL_ZOOM = 16;
 const PIN = { w: 56, h: 32, tail: 6 };
 
@@ -79,7 +80,7 @@ function roadTone(monthly: number, mid: number) {
   return "";
 }
 
-function drawMolit(L: L, map: Leaflet.Map, layer: MolitLayer) {
+function drawMolit(L: L, group: Leaflet.LayerGroup, layer: MolitLayer) {
   const prices = layer.roads.map((r) => r.monthly).filter((m): m is number => m != null).sort((a, b) => a - b);
   const mid = prices.length ? prices[Math.floor(prices.length / 2)] : 40;
   for (const r of layer.roads) {
@@ -93,7 +94,7 @@ function drawMolit(L: L, map: Leaflet.Map, layer: MolitLayer) {
       }),
     })
       .bindPopup(molitPopup(`${r.name} 원룸 시세`, "원룸형 거래", r))
-      .addTo(map);
+      .addTo(group);
   }
   for (const b of layer.buildings) {
     const price = b.monthly != null ? `월 ${b.monthly}만` : b.deposit != null ? `전세 ${b.deposit}만` : "";
@@ -102,7 +103,7 @@ function drawMolit(L: L, map: Leaflet.Map, layer: MolitLayer) {
       icon: L.divIcon({ className: "label-icon", iconSize: [0, 0], html: `<div class="molit-bldg">${esc(b.name)}<span>${esc(price)}</span></div>` }),
     })
       .bindPopup(molitPopup(b.name, `${b.type} 전월세`, b))
-      .addTo(map);
+      .addTo(group);
   }
 }
 
@@ -177,17 +178,20 @@ export default function MapView({
   rooms,
   selectedId,
   onSelect,
+  showMolit,
 }: {
   data: RoomsData;
   rooms: Room[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  showMolit: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
-  const ref = useRef<{ L: L; map: Leaflet.Map; cluster: Leaflet.MarkerClusterGroup; picked: Leaflet.LayerGroup } | null>(null);
+  const ref = useRef<{ L: L; map: Leaflet.Map; cluster: Leaflet.MarkerClusterGroup; picked: Leaflet.LayerGroup; molit: Leaflet.LayerGroup } | null>(null);
+  const pins = useRef<{ marker: Leaflet.Marker; room: Room }[]>([]);
   // 지도는 비동기로 한 번 만들어지므로, 핀을 그릴 때는 늘 최신 값을 읽게 ref에 둔다.
-  const latest = useRef({ rooms, selectedId, onSelect });
-  latest.current = { rooms, selectedId, onSelect };
+  const latest = useRef({ rooms, selectedId, onSelect, showMolit });
+  latest.current = { rooms, selectedId, onSelect, showMolit };
 
   useEffect(() => {
     let cancelled = false;
@@ -236,7 +240,10 @@ export default function MapView({
         iconCreateFunction: (c) => clusterIcon(L, c.getChildCount()),
       }).addTo(map);
       const picked = L.layerGroup().addTo(map);
-      ref.current = { L, map, cluster, picked };
+      const molitGroup = L.layerGroup();
+      if (latest.current.showMolit) molitGroup.addTo(map);
+      ref.current = { L, map, cluster, picked, molit: molitGroup };
+      map.on("zoomend", refreshPinIcons);
       // 화면 폭이 바뀌어 지도 칸 크기가 달라지면 Leaflet에 다시 재게 한다(안 하면 빈 칸으로 남는다).
       resize = new ResizeObserver(() => map.invalidateSize());
       resize.observe(box.current);
@@ -246,7 +253,7 @@ export default function MapView({
       ]);
       // 바탕 지도나 실거래 층을 못 받아도 핀은 보이게 둔다. 실거래 건물 이름표와 겹치는 바탕 이름표는 뺀다.
       if (!cancelled && gj) drawBasemap(L, map, gj.features as Feature[], new Set(molit?.buildings.map((b) => normName(b.name)) ?? []));
-      if (!cancelled && molit) drawMolit(L, map, molit);
+      if (!cancelled && molit) drawMolit(L, molitGroup, molit);
       setPins();
     })();
     return () => {
@@ -259,13 +266,27 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function pinIcon(L: L, room: Room, selected: boolean, zoom: number) {
+    // 멀리서 볼 때는 따로 떨어진 핀도 묶음처럼 '1' 동그라미로 보여, 가격 핀이 지도에 흩어져 보이지 않게 한다.
+    if (!selected && zoom < PRICE_ZOOM) return clusterIcon(L, 1);
+    return L.divIcon({ className: "pin-icon", iconSize: [PIN.w, PIN.h], iconAnchor: [PIN.w / 2, PIN.h], html: pinHtml(room, selected) });
+  }
+
+  function refreshPinIcons() {
+    const cur = ref.current;
+    if (!cur) return;
+    const zoom = cur.map.getZoom();
+    for (const { marker, room } of pins.current) marker.setIcon(pinIcon(cur.L, room, false, zoom));
+  }
+
   function setPins() {
     const cur = ref.current;
     if (!cur) return;
-    const { L, cluster, picked } = cur;
+    const { L, cluster, picked, map } = cur;
     const { rooms, selectedId } = latest.current;
     cluster.clearLayers();
     picked.clearLayers();
+    pins.current = [];
     const markers: Leaflet.Marker[] = [];
     for (const r of rooms) {
       if (!r.inCity) continue;
@@ -273,14 +294,24 @@ export default function MapView({
       const m = L.marker([r.lat, r.lon], {
         title: `${r.name} · ${r.headline}`,
         zIndexOffset: sel ? 1000 : 0,
-        icon: L.divIcon({ className: "pin-icon", iconSize: [PIN.w, PIN.h], iconAnchor: [PIN.w / 2, PIN.h], html: pinHtml(r, sel) }),
+        icon: pinIcon(L, r, sel, map.getZoom()),
       });
       m.on("click", () => latest.current.onSelect(r.id));
       if (sel) m.addTo(picked);
-      else markers.push(m);
+      else {
+        markers.push(m);
+        pins.current.push({ marker: m, room: r });
+      }
     }
     cluster.addLayers(markers);
   }
+
+  useEffect(() => {
+    const cur = ref.current;
+    if (!cur) return;
+    if (showMolit) cur.molit.addTo(cur.map);
+    else cur.molit.remove();
+  }, [showMolit]);
 
   useEffect(() => {
     setPins();

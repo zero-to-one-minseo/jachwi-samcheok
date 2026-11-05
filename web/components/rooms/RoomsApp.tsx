@@ -43,12 +43,12 @@ export default function RoomsApp({ data }: { data: RoomsData }) {
   return (
     <main className="flex flex-1 flex-col md:h-[calc(100dvh-56px)] md:flex-none md:flex-row">
       <section className="relative h-[56dvh] shrink-0 md:h-auto md:flex-1">
-        <MapView data={data} rooms={showSurvey ? rooms : []} selectedId={selected?.id ?? null} onSelect={pick} />
+        <MapView data={data} rooms={showSurvey ? rooms : []} selectedId={selected?.id ?? null} onSelect={pick} showMolit={!showSurvey} />
         <div className="absolute bottom-8 left-3 z-[900] flex gap-1 rounded-full border border-line bg-surface p-1 text-[13px] font-semibold shadow-sm">
           <button type="button" aria-pressed={!showSurvey} onClick={() => { setShowSurvey(false); setSelectedId(null); }}
             className={`rounded-full px-3 py-1 ${!showSurvey ? "bg-ink text-white" : "text-muted"}`}>실거래 평균</button>
           <button type="button" aria-pressed={showSurvey} onClick={() => setShowSurvey(true)}
-            className={`rounded-full px-3 py-1 ${showSurvey ? "bg-ink text-white" : "text-muted"}`}>학생 조사 방</button>
+            className={`rounded-full px-3 py-1 ${showSurvey ? "bg-ink text-white" : "text-muted"}`}>직접 조사</button>
         </div>
         <div className="pointer-events-none absolute inset-x-0 top-0 z-[900] p-3 md:p-4">
           <div className="pointer-events-auto ml-12 md:ml-14">
@@ -87,7 +87,7 @@ function Summary({ count, studentMid, base, resetable, onReset }: {
 }) {
   const max = Math.max(studentMid ?? 0, base?.monthly ?? 0, 1);
   const bars = [
-    { label: "학생 조사 방", value: studentMid, color: "bg-sea" },
+    { label: "직접 조사", value: studentMid, color: "bg-sea" },
     { label: "국토부 실거래", value: base?.monthly ?? null, color: "bg-line-strong" },
   ];
   return (

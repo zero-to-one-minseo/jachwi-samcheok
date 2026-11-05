@@ -39,7 +39,7 @@ TOOLS = [
      "input_schema": {"type": "object", "properties": {"keyword": {"type": "string"}}, "required": ["keyword"]}},
     {"name": "get_building_register", "description": "search_building이 준 key로 건축물대장(용도, 사용승인 연도, 층수, 가구 수, 층별 방 크기)을 지금 조회한다.",
      "input_schema": {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}},
-    {"name": "compare_listing", "description": "읽은 매물 칸과 찾은 건물로 국토부 실거래·학생 조사와 비교하고, 등급과 계약 전 확인할 점을 코드로 계산한다. 마지막에 꼭 한 번 부른다.",
+    {"name": "compare_listing", "description": "읽은 매물 칸과 찾은 건물로 국토부 실거래·직접 조사와 비교하고, 등급과 계약 전 확인할 점을 코드로 계산한다. 마지막에 꼭 한 번 부른다.",
      "input_schema": _COMPARE_SCHEMA},
 ]
 

@@ -194,7 +194,7 @@ def peers(x: Listing) -> list[dict[str, Any]]:
 
     sv = [s["monthly"] for s in m["survey"] if s["monthly"] and (s["dong"] in dongs or s["area"] == x.area_hint)]
     if sv:
-        out.append({"label": f"{where} 학생 조사 방", "basis": "팀이 직접 조사한 학생 방(월 환산)", "stats": _stats(sv)})
+        out.append({"label": f"{where} 직접 조사", "basis": "팀이 직접 조사한 방(월 환산)", "stats": _stats(sv)})
     return out
 
 
