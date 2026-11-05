@@ -99,6 +99,8 @@ def classify(tags: dict) -> str | None:
 LINE_KINDS = {"road_major", "road_middle", "road_minor", "rail", "river"}
 
 
+# 같은 곳이 옛 이름·다른 이름으로 한 번 더 들어 있어 이름표가 겹치는 것.
+DUPLICATE_NAMES = {"강원도 삼척의료원", "삼척 터미널"}
 PRIORITY_WORDS = ("강원대학교", "삼척시청", "터미널", "홈플러스", "삼척의료원")
 
 
@@ -109,7 +111,7 @@ def is_priority(name: str, tags: dict) -> bool:
 def label_kind(tags: dict) -> str | None:
     name = tags.get("name") or ""
     # 동네 의원·약국까지 넣으면 지도가 이름표로 덮인다.
-    if not name or name.endswith("의원") or "(" in name:
+    if not name or name.endswith("의원") or "(" in name or name in DUPLICATE_NAMES:
         return None
     if tags.get("amenity") in LABEL_AMENITY:
         return "public"

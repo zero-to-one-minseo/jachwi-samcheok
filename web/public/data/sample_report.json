@@ -1,0 +1,263 @@
+{
+  "ok": true,
+  "report": {
+    "doc_type": "계약서",
+    "contract_type": "월세",
+    "read_state": "일부 흐림",
+    "read_note": "특약 6번 손글씨가 조금 흐림",
+    "hidden_instruction": false,
+    "banners": [
+      {
+        "level": "warning",
+        "text": "사진 일부가 흐려요. 흐린 곳은 원본과 꼭 대조해 주세요."
+      }
+    ],
+    "fee": {
+      "criterion_id": "관리-01",
+      "grade": "확인 필요",
+      "label": "항목별 금액을 찾지 못함",
+      "summary": "관리비 월 120,000원 · 정액 · 항목별 금액 없음",
+      "formula": "120,000 ≥ 100,000",
+      "amount_text": "관리비 월 120,000원 (정액)",
+      "source_text": "관리비 월 120,000원 (정액)",
+      "items": [],
+      "question": "관리비에 어떤 항목이 들어 있고 항목별로 얼마인지 알려 주실 수 있을까요?",
+      "evidence": {
+        "basis": "관리비가 매달 10만 원 이상으로 정해져 있으면 중개사무소 광고에는 항목별 금액을 적게 되어 있고, 정부 표준계약서 양식에도 항목별 금액 칸이 있어요. 이 계약서에서는 항목별 금액을 찾지 못했어요.",
+        "limits": "직거래 계약서에는 직접 적용되지 않아요. 집주인이 내역을 주지 않으면 광고에서도 빠질 수 있어요. 매달 받는 관리비 고지서를 어떻게 표시해야 하는지는 이 근거가 다루지 않아요.",
+        "source_name": "[표시·광고 명시사항 세부기준(국토교통부 고시)](https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000250356) · [법무부 보도자료](https://moj.go.kr/bbs/moj/182/575809/artclView.do) · [법무부 표준계약서 개정 안내](https://www.immigration.go.kr/bbs/moj/118/575868/artclView.do)",
+        "source_link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000250356)"
+      },
+      "notes": [
+        "AI가 읽은 금액으로 코드가 판정했어요. 금액이 맞는지 원본과 꼭 대조해 주세요.",
+        "중개사를 끼고 계약하면 관리비 금액과 산출내역을 중개사에게 설명해 달라고 요청해 보세요."
+      ],
+      "by_code": true
+    },
+    "cards": [
+      {
+        "criterion_id": "퇴실-01",
+        "title": "퇴실 청소비 공제",
+        "grade": "주의",
+        "ai_grade": "주의",
+        "quote": "3) 퇴실 시 청소비 10만 원을 보증금에서 공제한다.",
+        "location": "특약 3번",
+        "text_kind": "인쇄 글자",
+        "explanation": "방 상태와 관계없이 청소비 10만 원이 보증금에서 빠져요. 청소 범위가 적혀 있지 않아요.",
+        "question": "퇴실 청소비 10만 원에는 어떤 청소가 들어가는지 알려 주실 수 있을까요?",
+        "in_list": true,
+        "evidence": {
+          "basis": "평범하게 살면서 생긴 자연스러운 낡음은 원상복구 대상이 아니라고 정부 표준계약서에 적혀 있어요. 퇴실 청소비를 내기로 했다면 금액과 범위를 계약서에 미리 적어 두고, 입주·퇴실 때 방 사진을 찍어 두세요.",
+          "limits": "퇴실 청소비 특약이 유효한지를 직접 다룬 정부 안내나 판례는 찾지 못했어요. 이 카드는 공제가 정당한지 부당한지 판단하지 않아요. 고의나 과실로 망가뜨린 것은 세입자 부담으로 안내돼요.",
+          "source_name": "[민법](https://www.law.go.kr/LSW/lsInfoP.do?lsId=001706&ancYnChk=0) · [법무부 표준계약서 개정 안내](https://www.immigration.go.kr/bbs/moj/118/575868/artclView.do)",
+          "source_link": "https://www.law.go.kr/LSW/lsInfoP.do?lsId=001706&ancYnChk=0)"
+        },
+        "tags": [],
+        "grade_notes": [],
+        "rewritten": false,
+        "by_code": false,
+        "grade_changed": false
+      },
+      {
+        "criterion_id": "수리-01",
+        "title": "수리비 부담 범위",
+        "grade": "주의",
+        "ai_grade": "주의",
+        "quote": "4) 수리비는 전부 임차인 부담으로 한다.",
+        "location": "특약 4번",
+        "text_kind": "인쇄 글자",
+        "explanation": "어떤 고장이든 수리비를 내가 내야 할 수 있는 조항이에요. 보일러·배관 같은 큰 고장도 들어가는지 확인해야 해요.",
+        "question": "보일러나 배관이 고장 나면 수리비는 누가 내는지 알려 주실 수 있을까요?",
+        "in_list": true,
+        "evidence": {
+          "basis": "보일러·배관·전기처럼 집의 기본 설비가 낡아서 생긴 고장은 정부 표준계약서도 보통 집주인 부담으로 안내해요. 계약서에 '수리는 세입자 부담' 같은 문구가 있으면 어디까지 내가 내는 건지 집주인에게 물어보고 구체적으로 적어 두세요.",
+          "limits": "특약이 수리 범위를 구체적으로 정했다면 달리 볼 여지가 있어요. 무조건 집주인 부담이라는 뜻은 아니에요. 표준계약서의 부담 안내는 법 조문이 아니라 안내 문구예요.",
+          "source_name": "[민법](https://www.law.go.kr/LSW/lsInfoP.do?lsId=001706&ancYnChk=0) · [대법원 94다34692](https://www.law.go.kr/LSW/precInfoP.do?precSeq=199673) · [법무부 표준계약서 개정 안내](https://www.immigration.go.kr/bbs/moj/118/575868/artclView.do)",
+          "source_link": "https://www.law.go.kr/LSW/lsInfoP.do?lsId=001706&ancYnChk=0)"
+        },
+        "tags": [],
+        "grade_notes": [],
+        "rewritten": true,
+        "by_code": false,
+        "grade_changed": false
+      },
+      {
+        "criterion_id": "기간-05",
+        "title": "중도 퇴실 조건",
+        "grade": "확인 필요",
+        "ai_grade": "주의",
+        "quote": "5) 중도 퇴실 시 1~2개월 전에 알리고, 새 임차인의 중개보수는 임차인이 부담한다. 문의 [개인정보]",
+        "location": "특약 5번",
+        "text_kind": "인쇄 글자",
+        "explanation": "나가기 1~2개월 전에 알려야 하고 새 세입자 중개보수 $ 를 내가 내요. 특약:수리: 같은 글도 그대로 보여야 해요.",
+        "question": "중간에 나가면 새 세입자 중개보수 말고 더 내야 하는 돈이 있을까요?",
+        "in_list": true,
+        "evidence": null,
+        "tags": [],
+        "grade_notes": [
+          "검증된 근거가 없는 기준이라 확인 필요까지만 표시해요."
+        ],
+        "rewritten": false,
+        "by_code": false,
+        "grade_changed": true
+      },
+      {
+        "criterion_id": "생활-02",
+        "title": "반려동물·흡연",
+        "grade": "확인 필요",
+        "ai_grade": "괜찮음",
+        "quote": "6) 반려동물 금지. 어기면 계약 해지함 30일",
+        "location": "특약 6번",
+        "text_kind": "손글씨",
+        "explanation": "반려동물을 키우면 계약이 끝날 수 있어요.",
+        "question": "반려동물이나 흡연 같은 생활 규칙이 있다면, 어겼을 때 어떻게 되는지 미리 알려 주실 수 있을까요?",
+        "in_list": true,
+        "evidence": null,
+        "tags": [
+          "사진에서 읽은 값, 원본 확인"
+        ],
+        "grade_notes": [
+          "검증된 근거가 없는 기준이라 확인 필요까지만 표시해요."
+        ],
+        "rewritten": false,
+        "by_code": false,
+        "grade_changed": true
+      },
+      {
+        "criterion_id": "기타",
+        "title": "임대인 연락처와 계좌",
+        "grade": "확인 필요",
+        "ai_grade": "주의",
+        "quote": "임대인 [개인정보] 주민등록번호 [개인정보] 입금 계좌 농협 [개인정보]",
+        "location": "1쪽 아래",
+        "text_kind": "인쇄 글자",
+        "explanation": "월세를 보낼 계좌가 적혀 있어요. :red[계좌] 주인이 집주인 본인인지 확인해 보세요.",
+        "question": "월세를 보낼 계좌의 예금주가 집주인님 본인이 맞는지 확인해 주실 수 있을까요?",
+        "in_list": false,
+        "evidence": null,
+        "tags": [
+          "AI 참고 의견"
+        ],
+        "grade_notes": [
+          "기준 목록 밖이라 확인 필요까지만 표시해요."
+        ],
+        "rewritten": false,
+        "by_code": false,
+        "grade_changed": true
+      },
+      {
+        "criterion_id": "기간-01",
+        "title": "계약 기간",
+        "grade": "괜찮음",
+        "ai_grade": "괜찮음",
+        "quote": "기간 2027년 3월 1일부터 2028년 2월 29일까지 (12개월)",
+        "location": "제2조",
+        "text_kind": "인쇄 글자",
+        "explanation": "시작일과 끝나는 날이 분명하게 적혀 있어요.",
+        "question": "",
+        "in_list": true,
+        "evidence": {
+          "basis": "계약서에 1년이라고 적혀 있어도 주택임대차보호법(제4조)에 따라 세입자는 2년까지 살겠다고 할 수도 있고, 1년에 끝내겠다고 할 수도 있어요. 주택임대차보호법(제10조)에는 이 법보다 세입자에게 불리하게 정한 약정은 효력이 없다고 적혀 있어요.",
+          "limits": "잠깐 머무는 용도가 분명한 계약은 예외일 수 있어요. 학기 단위 단기 계약에 2년이 보장된다는 뜻은 아니에요. 1년 계약에서 갱신요구권을 언제 쓰는지는 정부 공식 해석을 확인하지 못했어요.",
+          "source_name": "[주택임대차보호법](https://www.law.go.kr/법령/주택임대차보호법) · [대법원 96다5551](https://www.law.go.kr/LSW/precInfoP.do?mode=0&precSeq=198072)",
+          "source_link": "https://www.law.go.kr/법령/주택임대차보호법)"
+        },
+        "tags": [],
+        "grade_notes": [],
+        "rewritten": false,
+        "by_code": false,
+        "grade_changed": false
+      },
+      {
+        "criterion_id": "퇴실-02",
+        "title": "원상복구 범위",
+        "grade": "괜찮음",
+        "ai_grade": "괜찮음",
+        "quote": "2) 시설물의 노후화나 통상 생길 수 있는 파손은 원상복구 의무에 포함되지 않는다.",
+        "location": "특약 2번",
+        "text_kind": "인쇄 글자",
+        "explanation": "자연스럽게 낡은 부분은 고쳐 놓지 않아도 된다고 적혀 있어요.",
+        "question": "",
+        "in_list": true,
+        "evidence": {
+          "basis": "평범하게 살면서 생긴 자연스러운 낡음은 원상복구 대상이 아니라고 정부 표준계약서에 적혀 있어요. 고의나 과실로 망가뜨린 것은 세입자 부담으로 안내돼요.",
+          "limits": "자연스러운 낡음을 원상복구에서 빼는 근거는 정부 표준계약서와 하급심 판결이고, 대법원 판결로 확인한 것은 아니에요. 괜찮음이 나와도 공제가 정당하다는 뜻은 아니에요.",
+          "source_name": "[민법](https://www.law.go.kr/LSW/lsInfoP.do?lsId=001706&ancYnChk=0) · [서울중앙지방법원 2005가합100279](https://www.law.go.kr/LSW/precInfoP.do?precSeq=147076) · [법무부 표준계약서 개정 안내](https://www.immigration.go.kr/bbs/moj/118/575868/artclView.do)",
+          "source_link": "https://www.law.go.kr/LSW/lsInfoP.do?lsId=001706&ancYnChk=0)"
+        },
+        "tags": [],
+        "grade_notes": [],
+        "rewritten": false,
+        "by_code": false,
+        "grade_changed": false
+      },
+      {
+        "criterion_id": "전입-02",
+        "title": "전입신고·확정일자 약속",
+        "grade": "괜찮음",
+        "ai_grade": "괜찮음",
+        "quote": "1) 임차인은 잔금 지급일에 전입신고와 확정일자를 받고, 임대인은 그다음 날까지 담보권을 설정하지 않는다.",
+        "location": "특약 1번",
+        "text_kind": "인쇄 글자",
+        "explanation": "입주한 날 전입신고와 확정일자를 받기로 적혀 있어요.",
+        "question": "",
+        "in_list": true,
+        "evidence": {
+          "basis": "입주한 날 전입신고를 하면 보통 다음 날 0시부터 집주인이 바뀌어도 계약을 주장할 수 있는 힘(대항력)이 생기고, 확정일자까지 받아 두면 집이 경매·공매로 넘어갈 때 나보다 늦게 생긴 권리보다 먼저 보증금을 받을 수 있어요. 주택임대차보호법(제10조)에는 이 법보다 세입자에게 불리하게 정한 약정은 효력이 없다고 적혀 있어요.",
+          "limits": "나보다 먼저 잡힌 근저당보다는 뒤에 받아요. 등기부는 이 앱이 확인하지 않아요. '전입신고 즉시 대항력' 개정이 국회에서 추진되고 있어 '다음 날' 기준은 바뀔 수 있어요.",
+          "source_name": "[주택임대차보호법](https://www.law.go.kr/법령/주택임대차보호법) · [대법원 99다9981](https://www.law.go.kr/LSW/precInfoP.do?precSeq=195095) · [법무부 표준계약서 개정 안내](https://www.immigration.go.kr/bbs/moj/118/575868/artclView.do)",
+          "source_link": "https://www.law.go.kr/법령/주택임대차보호법)"
+        },
+        "tags": [],
+        "grade_notes": [],
+        "rewritten": false,
+        "by_code": false,
+        "grade_changed": false
+      }
+    ],
+    "ok_hidden": 0,
+    "questions": [
+      "퇴실 청소비 10만 원에는 어떤 청소가 들어가는지 알려 주실 수 있을까요?",
+      "보일러나 배관이 고장 나면 수리비는 누가 내는지 알려 주실 수 있을까요?",
+      "관리비에 어떤 항목이 들어 있고 항목별로 얼마인지 알려 주실 수 있을까요?",
+      "중간에 나가면 새 세입자 중개보수 말고 더 내야 하는 돈이 있을까요?",
+      "반려동물이나 흡연 같은 생활 규칙이 있다면, 어겼을 때 어떻게 되는지 미리 알려 주실 수 있을까요?",
+      "월세를 보낼 계좌의 예금주가 집주인님 본인이 맞는지 확인해 주실 수 있을까요?"
+    ],
+    "unreadable": false,
+    "not_interpreted": false,
+    "changed_count": 3,
+    "evidence_count": [
+      6,
+      9
+    ],
+    "answer_lines": [
+      "관리-01:확인 필요",
+      "퇴실-01:주의",
+      "수리-01:주의",
+      "기간-05:확인 필요",
+      "생활-02:확인 필요",
+      "기타:확인 필요",
+      "기간-01:괜찮음",
+      "퇴실-02:괜찮음",
+      "전입-02:괜찮음"
+    ],
+    "counts": {
+      "주의": 2,
+      "확인 필요": 4,
+      "괜찮음": 3
+    }
+  },
+  "meta": {
+    "model": "claude-opus-5-5",
+    "effort": "medium",
+    "elapsed_s": 0.0,
+    "criteria_version": "26c91e55",
+    "criteria_count": 15,
+    "kind": "image",
+    "source": "saved",
+    "label": "시험용 가짜 결과 (샘플 A 모양)",
+    "saved_at": "2026-11-05T20:00:00+09:00",
+    "fake": true
+  }
+}

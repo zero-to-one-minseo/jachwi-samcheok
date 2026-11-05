@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "SUIT";
+  src: url("https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2.0.5/fonts/variable/woff2/SUIT-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --line: #e4e4e0;
+  --line-strong: #d3d3ce;
+  --ink: #1c2228;
+  --muted: #69727a;
+  --sea: #0e7c86;
+  --sea-soft: #e3f1f2;
+  --cheap: #23875a;
+  --cheap-soft: #e4f3ea;
+  --pricey: #cf5f1f;
+  --pricey-soft: #fbeadf;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-sea: var(--sea);
+  --color-sea-soft: var(--sea-soft);
+  --color-cheap: var(--cheap);
+  --color-cheap-soft: var(--cheap-soft);
+  --color-pricey: var(--pricey);
+  --color-pricey-soft: var(--pricey-soft);
+  --font-sans: "SUIT", "Apple SD Gothic Neo", system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 2px;
+}
+
+/* 지도 안 꾸밈: Leaflet이 만드는 요소라 전역에 둔다. */
+.leaflet-container {
+  background: #f4f4f1;
+  font-family: var(--font-sans);
+}
+.bm-label {
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font: 600 11px var(--font-sans);
+  text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
+  pointer-events: none;
+}
+.bm-label.major {
+  font-size: 12px;
+  font-weight: 700;
+}
+.leaflet-container:not(.bm-near) .bm-label.minor {
+  display: none;
+}
+.leaflet-div-icon.pin-icon,
+.leaflet-div-icon.label-icon,
+.leaflet-div-icon.cluster-icon {
+  background: none;
+  border: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
