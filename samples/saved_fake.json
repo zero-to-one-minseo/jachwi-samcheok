@@ -1,0 +1,111 @@
+{
+  "format": 1,
+  "label": "시험용 가짜 결과 (샘플 A 모양)",
+  "saved_at": "2026-11-05T20:00:00+09:00",
+  "model": "claude-opus-5-5",
+  "effort": "medium",
+  "elapsed_s": 0.0,
+  "criteria_version": "",
+  "instructions_version": "",
+  "sample": "sample_a.jpg",
+  "fake": true,
+  "usage": {},
+  "output": {
+    "doc_type": "계약서",
+    "contract_type": "월세",
+    "read_state": "일부 흐림",
+    "read_note": "특약 6번 손글씨가 조금 흐림",
+    "hidden_instruction": "없음",
+    "clauses": [
+      {
+        "criterion_id": "퇴실-01",
+        "title": "퇴실 청소비 10만 원 공제",
+        "grade": "주의",
+        "quote": "3) 퇴실 시 청소비 10만 원을 보증금에서 공제한다.",
+        "location": "특약 3번",
+        "text_kind": "인쇄 글자",
+        "explanation": "방 상태와 관계없이 청소비 10만 원이 보증금에서 빠져요. 청소 범위가 적혀 있지 않아요.",
+        "question": "퇴실 청소비 10만 원에는 어떤 청소가 들어가는지 알려 주실 수 있을까요?"
+      },
+      {
+        "criterion_id": "수리-01",
+        "title": "수리비 전부 임차인 부담",
+        "grade": "주의",
+        "quote": "4) 수리비는 전부 임차인 부담으로 한다.",
+        "location": "특약 4번",
+        "text_kind": "인쇄 글자",
+        "explanation": "이런 특약은 무효예요. 보일러 같은 큰 고장도 내가 내야 할 수 있어요.",
+        "question": "보일러나 배관이 고장 나면 수리비는 누가 내는지 알려 주실 수 있을까요?"
+      },
+      {
+        "criterion_id": "기간-05",
+        "title": "중도 퇴실",
+        "grade": "주의",
+        "quote": "5) 중도 퇴실 시 1~2개월 전에 알리고, 새 임차인의 중개보수는 임차인이 부담한다. 문의 010-0000-0000",
+        "location": "특약 5번",
+        "text_kind": "인쇄 글자",
+        "explanation": "나가기 1~2개월 전에 알려야 하고 새 세입자 중개보수 $ 를 내가 내요. 특약:수리: 같은 글도 그대로 보여야 해요.",
+        "question": "중간에 나가면 새 세입자 중개보수 말고 더 내야 하는 돈이 있을까요?"
+      },
+      {
+        "criterion_id": "생활-02",
+        "title": "반려동물 금지",
+        "grade": "괜찮음",
+        "quote": "6) 반려동물 금지. 어기면 계약 해지함 30일",
+        "location": "특약 6번",
+        "text_kind": "손글씨",
+        "explanation": "반려동물을 키우면 계약이 끝날 수 있어요.",
+        "question": ""
+      },
+      {
+        "criterion_id": "기간-01",
+        "title": "계약 기간",
+        "grade": "괜찮음",
+        "quote": "기간 2027년 3월 1일부터 2028년 2월 29일까지 (12개월)",
+        "location": "제2조",
+        "text_kind": "인쇄 글자",
+        "explanation": "시작일과 끝나는 날이 분명하게 적혀 있어요.",
+        "question": ""
+      },
+      {
+        "criterion_id": "퇴실-02",
+        "title": "원상복구 범위",
+        "grade": "괜찮음",
+        "quote": "2) 시설물의 노후화나 통상 생길 수 있는 파손은 원상복구 의무에 포함되지 않는다.",
+        "location": "특약 2번",
+        "text_kind": "인쇄 글자",
+        "explanation": "자연스럽게 낡은 부분은 고쳐 놓지 않아도 된다고 적혀 있어요.",
+        "question": ""
+      },
+      {
+        "criterion_id": "전입-02",
+        "title": "전입신고·확정일자",
+        "grade": "괜찮음",
+        "quote": "1) 임차인은 잔금 지급일에 전입신고와 확정일자를 받고, 임대인은 그다음 날까지 담보권을 설정하지 않는다.",
+        "location": "특약 1번",
+        "text_kind": "인쇄 글자",
+        "explanation": "입주한 날 전입신고와 확정일자를 받기로 적혀 있어요.",
+        "question": ""
+      },
+      {
+        "criterion_id": "기타",
+        "title": "임대인 연락처와 계좌",
+        "grade": "주의",
+        "quote": "임대인 [개인정보] 주민등록번호 000000-0000000 입금 계좌 농협 000-00-000000",
+        "location": "1쪽 아래",
+        "text_kind": "인쇄 글자",
+        "explanation": "월세를 보낼 계좌가 적혀 있어요. :red[계좌] 주인이 집주인 본인인지 확인해 보세요.",
+        "question": "월세를 보낼 계좌의 예금주가 집주인님 본인이 맞는지 확인해 주실 수 있을까요?"
+      }
+    ],
+    "management_fee": {
+      "mention": "금액 있음",
+      "amount_text": "관리비 월 120,000원 (정액)",
+      "monthly_won": 120000,
+      "billing": "정액",
+      "itemized": "없음",
+      "items": [],
+      "source_text": "관리비 월 120,000원 (정액)"
+    }
+  }
+}
