@@ -62,7 +62,7 @@ export default function RoomsApp({ data }: { data: RoomsData }) {
         </div>
       </section>
 
-      <aside ref={panel} className="flex flex-col border-line bg-surface md:min-h-0 md:w-[240px] md:shrink-0 md:border-l">
+      <aside ref={panel} className="flex flex-col border-line bg-surface md:min-h-0 md:w-[360px] md:shrink-0 md:border-l">
         <Summary count={rooms.length} studentMid={studentMid} base={base} survey={showSurvey} resetable={filterCount(filters, top) > 0}
           onReset={() => { setFilters(emptyFilters(top)); setSelectedId(null); }} />
         <div className="flex-1 md:min-h-0 md:overflow-y-auto">
