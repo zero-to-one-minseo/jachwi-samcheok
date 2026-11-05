@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -22,13 +23,16 @@ OVERPASS = "https://overpass-api.de/api/interpreter"
 # CITY_BOUNDS보다 조금 넓게 받아 가장자리가 비지 않게 한다.
 BBOX = (37.420, 129.128, 37.473, 129.202)
 
-MAJOR = {"motorway", "trunk", "primary", "motorway_link", "trunk_link", "primary_link"}
+TRUNK = {"motorway", "trunk", "motorway_link", "trunk_link"}
+MAJOR = {"primary", "primary_link"}
 MIDDLE = {"secondary", "tertiary", "secondary_link", "tertiary_link"}
 MINOR = {"residential", "unclassified", "living_street", "service", "road"}
 GREEN_LANDUSE = {"forest", "grass", "meadow", "recreation_ground", "village_green", "cemetery"}
 LABEL_AMENITY = {"university", "college", "school", "townhall", "hospital", "police", "fire_station",
                  "bus_station", "library", "post_office"}
 LABEL_SHOP = {"supermarket", "mall", "department_store"}
+PLACE_KINDS = {"suburb", "quarter", "neighbourhood"}
+NOT_NAMES = {"근린생활시설", "상가", "관리동", "경비실"}
 
 
 def query() -> str:
@@ -48,6 +52,7 @@ def query() -> str:
   node["amenity"]["name"]{b};
   node["shop"]["name"]{b};
   node["railway"="station"]["name"]{b};
+  node["place"~"suburb|quarter|neighbourhood"]["name"]{b};
   way["amenity"]["name"]{b};
   way["shop"]["name"]{b};
 );
@@ -68,6 +73,8 @@ def _coords(geom: list[dict]) -> list[list[float]]:
 def classify(tags: dict) -> str | None:
     hw = tags.get("highway")
     if hw:
+        if hw in TRUNK:
+            return "road_trunk"
         if hw in MAJOR:
             return "road_major"
         if hw in MIDDLE:
@@ -85,7 +92,9 @@ def classify(tags: dict) -> str | None:
         return "campus"
     if tags.get("leisure") in ("pitch", "stadium"):
         return "pitch"
-    if tags.get("leisure") in ("park", "garden") or tags.get("natural") == "wood" or tags.get("landuse") in GREEN_LANDUSE:
+    if tags.get("natural") == "wood" or tags.get("landuse") == "forest":
+        return "forest"
+    if tags.get("leisure") in ("park", "garden") or tags.get("landuse") in GREEN_LANDUSE:
         return "green"
     if tags.get("landuse") == "residential":
         return "residential"
@@ -96,7 +105,7 @@ def classify(tags: dict) -> str | None:
     return None
 
 
-LINE_KINDS = {"road_major", "road_middle", "road_minor", "rail", "river"}
+LINE_KINDS = {"road_trunk", "road_major", "road_middle", "road_minor", "rail", "river"}
 
 
 # 같은 곳이 옛 이름·다른 이름으로 한 번 더 들어 있어 이름표가 겹치는 것.
@@ -121,6 +130,12 @@ def label_kind(tags: dict) -> str | None:
         return "public"
     if tags.get("leisure") == "park":
         return "park"
+    if tags.get("place") in PLACE_KINDS:
+        return "place"
+    is_apt = tags.get("building") == "apartments" or tags.get("landuse") == "residential" or name.endswith("아파트")
+    # 동 번호("101")나 시설 종류("근린생활시설")는 이름표로 쓰지 않는다.
+    if is_apt and re.search(r"[가-힣]{2,}", name) and name not in NOT_NAMES:
+        return "apt"
     return None
 
 

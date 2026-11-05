@@ -58,7 +58,7 @@ body {
 
 /* 지도 안 꾸밈: Leaflet이 만드는 요소라 전역에 둔다. */
 .leaflet-container {
-  background: #f4f4f1;
+  background: #f8f8f6;
   font-family: var(--font-sans);
 }
 .bm-label {
@@ -71,6 +71,11 @@ body {
 .bm-label.major {
   font-size: 12px;
   font-weight: 700;
+}
+.bm-label.place {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 .leaflet-container:not(.bm-near) .bm-label.minor {
   display: none;

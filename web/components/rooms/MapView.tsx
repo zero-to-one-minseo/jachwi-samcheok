@@ -18,22 +18,31 @@ const PICK_ZOOM = 17;
 const DETAIL_ZOOM = 16;
 const PIN = { w: 56, h: 32, tail: 6 };
 
-// 바탕 지도 색. 네이버 지도처럼 밝은 바탕에 흰 길, 노란 큰길, 연파랑 학교, 하늘색 강.
+// 바탕 지도 색. 카카오맵(직방 지도)처럼 거의 흰 바탕에 노란 큰길, 주황 고속도로, 진한 하늘색 강, 베이지 아파트 단지.
 const FILL: Record<string, Leaflet.PathOptions> = {
-  residential: { fillColor: "#eee8e1", fillOpacity: 1, stroke: false },
-  commercial: { fillColor: "#f1e9e2", fillOpacity: 1, stroke: false },
-  green: { fillColor: "#ddefd0", fillOpacity: 1, stroke: false },
-  pitch: { fillColor: "#c9e6b3", fillOpacity: 1, stroke: false },
-  campus: { fillColor: "#dce6f2", fillOpacity: 1, stroke: false },
-  water: { fillColor: "#a9d5f3", fillOpacity: 1, stroke: false },
-  building: { fillColor: "#e7e7e4", fillOpacity: 1, color: "#d5d5d2", weight: 0.6 },
+  residential: { fillColor: "#f2e8db", fillOpacity: 1, stroke: false },
+  commercial: { fillColor: "#f4eee7", fillOpacity: 1, stroke: false },
+  forest: { fillColor: "#eef5e6", fillOpacity: 1, stroke: false },
+  green: { fillColor: "#d7edc6", fillOpacity: 1, stroke: false },
+  pitch: { fillColor: "#c2e2a4", fillOpacity: 1, stroke: false },
+  campus: { fillColor: "#dbe8f7", fillOpacity: 1, stroke: false },
+  water: { fillColor: "#9dcff3", fillOpacity: 1, stroke: false },
+  building: { fillColor: "#ececea", fillOpacity: 1, color: "#dcdcd8", weight: 0.6 },
 };
+// [종류, 테두리 색, 테두리 굵기, 속 색, 속 굵기]. 테두리를 먼저 모두 칠하고 속을 위에 칠한다.
 const ROADS: [string, string, number, string, number][] = [
-  ["road_minor", "#dadad7", 5.5, "#ffffff", 3.8],
-  ["road_middle", "#d0d0cc", 7.5, "#ffffff", 5.6],
-  ["road_major", "#e9c46e", 9, "#fae19b", 7],
+  ["road_minor", "#e0e0dc", 5.5, "#ffffff", 3.8],
+  ["road_middle", "#ead7a0", 7.5, "#fff5d3", 5.6],
+  ["road_major", "#e8bd4a", 9, "#fadb6e", 7],
+  ["road_trunk", "#df8434", 10, "#f6a54b", 8],
 ];
-const LABEL_COLOR: Record<string, string> = { public: "#4f6fa8", shop: "#d9822b", park: "#3f944f" };
+const LABEL_COLOR: Record<string, string> = {
+  public: "#3d6bc4",
+  shop: "#e07b22",
+  park: "#3a9a4b",
+  apt: "#8c6a47",
+  place: "#6f6f6f",
+};
 
 type Feature = GeoJSON.Feature<GeoJSON.Geometry, { k: string; kind?: string; name?: string; p?: number }>;
 
@@ -76,12 +85,13 @@ function drawBasemap(L: L, map: Leaflet.Map, features: Feature[]) {
   const layer = (kind: string, style: Leaflet.PathOptions) => {
     if (by[kind]?.length) L.geoJSON({ type: "FeatureCollection", features: by[kind] } as GeoJSON.FeatureCollection, { style: () => style, interactive: false, renderer } as Leaflet.GeoJSONOptions).addTo(map);
   };
-  for (const k of ["residential", "commercial", "green", "pitch", "campus", "water"]) layer(k, FILL[k]);
-  layer("river", { color: "#a9d5f3", weight: 6, opacity: 1 });
+  for (const k of ["forest", "residential", "commercial", "green", "pitch", "campus", "water"]) layer(k, FILL[k]);
+  layer("river", { color: "#9dcff3", weight: 6, opacity: 1 });
   layer("building", FILL.building);
   for (const [k, edge, ew] of ROADS) layer(k, { color: edge, weight: ew, opacity: 1, lineCap: "round" });
   for (const [k, , , fill, fw] of ROADS) layer(k, { color: fill, weight: fw, opacity: 1, lineCap: "round" });
-  layer("rail", { color: "#a3a3a0", weight: 2.2, opacity: 1, dashArray: "7 5" });
+  layer("rail", { color: "#a7b8d8", weight: 3.5, opacity: 1 });
+  layer("rail", { color: "#ffffff", weight: 1.4, opacity: 1, dashArray: "6 6" });
 
   const seen = new Set<string>();
   for (const f of by.label ?? []) {
@@ -96,7 +106,7 @@ function drawBasemap(L: L, map: Leaflet.Map, features: Feature[]) {
       icon: L.divIcon({
         className: "label-icon",
         iconSize: [0, 0],
-        html: `<div class="bm-label ${p.p ? "major" : "minor"}" style="color:${LABEL_COLOR[p.kind ?? ""] ?? "#555"}">${esc(name)}</div>`,
+        html: `<div class="bm-label ${p.p || p.kind === "place" ? "major" : "minor"} ${p.kind ?? ""}" style="color:${LABEL_COLOR[p.kind ?? ""] ?? "#555"}">${esc(name)}</div>`,
       }),
     }).addTo(map);
   }
