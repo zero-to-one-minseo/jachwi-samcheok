@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // 노트북 개발 때 /api를 넘겨줄 때 기본 30초에서 끊긴다. 실제 계약서 분석은 50초 가까이 걸려 5분으로 늘린다.
+  experimental: { proxyTimeout: 300_000 },
   turbopack: {
     rules: {
       "*.css": {
