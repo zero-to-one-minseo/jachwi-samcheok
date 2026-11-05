@@ -312,5 +312,21 @@ class ContractFilesTest(unittest.TestCase):
                 self.assertNotIn(banned, path.read_text(encoding="utf-8").lower(), path.name)
 
 
+class IpLimiterTest(unittest.TestCase):
+    def test_blocks_after_limit_and_frees_after_window(self):
+        from _engine.ratelimit import IpLimiter
+        lim = IpLimiter(limit=2, window_s=10)
+        self.assertTrue(lim.allow("1.1.1.1", now=0))
+        self.assertTrue(lim.allow("1.1.1.1", now=1))
+        self.assertFalse(lim.allow("1.1.1.1", now=2))
+        self.assertTrue(lim.allow("2.2.2.2", now=2))
+        self.assertTrue(lim.allow("1.1.1.1", now=12))
+
+    def test_client_ip_prefers_forwarded_header(self):
+        from _engine.ratelimit import client_ip
+        self.assertEqual(client_ip({"x-forwarded-for": "3.3.3.3, 10.0.0.1"}, "127.0.0.1"), "3.3.3.3")
+        self.assertEqual(client_ip({}, "127.0.0.1"), "127.0.0.1")
+
+
 if __name__ == "__main__":
     unittest.main()

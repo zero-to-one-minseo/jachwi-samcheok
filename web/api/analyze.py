@@ -24,6 +24,7 @@ if _API_DIR not in sys.path:
     sys.path.insert(0, _API_DIR)
 
 from _engine import contract_ai, image_prep, rules, settings  # noqa: E402
+from _engine.ratelimit import IpLimiter, client_ip  # noqa: E402
 from _engine.criteria import build_criteria_text, load_criteria  # noqa: E402
 
 # Vercel 함수 요청 본문 상한(4.5MB)과 별개로, 이 함수가 스스로 막는 선.
@@ -35,6 +36,8 @@ MSG_CRITERIA_BROKEN = "기준 목록 파일에 문제가 있어 분석을 할 �
 MSG_NO_INSTRUCTIONS = "지시문 파일이 없어 분석을 할 수 없어요."
 MSG_INTERNAL = "분석 중 문제가 생겼어요. 다시 시도해 주세요."
 MSG_METHOD = "이 주소는 POST로만 분석해요."
+MSG_TOO_OFTEN = "같은 곳에서 분석을 너무 자주 했어요. 몇 분 뒤 다시 해 주세요."
+IP_LIMITER = IpLimiter(limit=6, window_s=600)
 
 # contract_ai의 status → (응답 code, HTTP 상태). 'ok'와 'limit_reached'는 따로 다룬다.
 STATUS_TO_CODE: dict[str, tuple[str, int]] = {
@@ -241,6 +244,9 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  Vercel이 이 이름을 �
             length = -1
         if length < 0:
             status, payload = 400, error_body("bad_request", MSG_NO_FILE)
+        elif not IP_LIMITER.allow(client_ip(self.headers, self.client_address[0])):
+            status, payload = 429, error_body("too_often", MSG_TOO_OFTEN)
+            self.close_connection = True
         elif length > MAX_BODY_BYTES:
             # 본문을 읽지 않고 끊는다.
             status, payload = 413, error_body("too_large", image_prep.MSG_TOO_BIG_FILE)

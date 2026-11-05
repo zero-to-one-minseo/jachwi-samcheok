@@ -22,9 +22,10 @@ import threading  # noqa: E402
 from datetime import date, datetime  # noqa: E402
 
 from _engine import agent, compare, settings  # noqa: E402
+from _engine.ratelimit import IpLimiter, client_ip  # noqa: E402
 
 MAX_BODY_BYTES = 4 * 1024 * 1024
-DAILY_LIMIT = 300
+DAILY_LIMIT = 150
 MSG_DAILY_LIMIT = "오늘 비교 횟수를 다 썼어요. 내일 다시 와 주세요."
 # Vercel은 함수마다 따로 묶어 배포해서 analyze.py를 불러올 수 없다. 상태 이름은 _engine/contract_ai와 같다.
 STATUS_TO_CODE = {"timeout": ("timeout", 504), "network": ("network", 502), "server_error": ("server_error", 503),
@@ -50,6 +51,8 @@ class _Counter:
 
 
 COUNTER = _Counter(DAILY_LIMIT)
+IP_LIMITER = IpLimiter(limit=20, window_s=600)
+MSG_TOO_OFTEN = "같은 곳에서 비교를 너무 자주 했어요. 몇 분 뒤 다시 해 주세요."
 MAX_TEXT = 4000
 MSG_EMPTY = "비교할 매물 글을 붙여넣거나 캡처 사진을 올려 주세요."
 MSG_FAIL = "매물 정보를 읽지 못했어요. 잠시 뒤 다시 시도해 주세요."
@@ -118,7 +121,10 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  Vercel이 이 이름을 �
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             length = -1
-        if length < 0 or length > MAX_BODY_BYTES:
+        if not IP_LIMITER.allow(client_ip(self.headers, self.client_address[0])):
+            status, payload = _err(429, "too_often", MSG_TOO_OFTEN)
+            self.close_connection = True
+        elif length < 0 or length > MAX_BODY_BYTES:
             status, payload = _err(413, "too_large", "사진이 너무 커요. 더 작은 캡처로 올려 주세요.")
             self.close_connection = True
         else:

@@ -95,7 +95,7 @@ export async function analyze(file: Prepared) {
       set({ step: "done", report: data.report, meta: data.meta, photoUrl: file.previewUrl,
         elapsedS: Math.round((Date.now() - started) / 1000), seen: false });
     } else {
-      if (data.code !== "bad_file" && data.code !== "too_large") addUse();
+      if (!["bad_file", "too_large", "too_often", "limit_reached"].includes(data.code)) addUse();
       set({ step: "error", message: data.message, retry: data.retryable ? file : null });
     }
   } catch {
