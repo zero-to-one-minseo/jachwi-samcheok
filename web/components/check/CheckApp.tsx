@@ -125,10 +125,6 @@ export default function CheckApp({ rooms }: { rooms: Room[] }) {
       )}
 
       <h1 className="text-[28px] font-extrabold tracking-[-0.02em] md:text-[34px]">계약서 점검</h1>
-      <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
-        계약서 사진을 올리면 AI가 조항을 읽고, 학생에게 불리할 수 있는 곳과 집주인에게 물어볼 질문을 짚어 줘요. 등급과 근거는 검증한 기준 목록에서 코드가 붙여요.
-        법률 자문이 아닌 확인 체크리스트예요.
-      </p>
 
       <section className="mt-6 rounded-2xl border border-line bg-surface p-5 md:p-6">
         <label
@@ -151,13 +147,15 @@ export default function CheckApp({ rooms }: { rooms: Room[] }) {
           ) : (
             <>
               <span className="text-[17px] font-bold">계약서 사진이나 PDF 올리기</span>
-              <span className="text-sm text-muted">휴대폰은 바로 찍을 수 있어요 · 사진 1장 또는 PDF 1개(3MB까지)</span>
+              <span className="text-sm text-ink">사진 1장 또는 PDF 1개(3MB까지)</span>
             </>
           )}
         </label>
 
-        <p className="mt-4 rounded-lg bg-[#fff4d6] px-3 py-2 text-sm font-semibold text-[#7a5600]">주민번호·연락처·계좌는 가리고 올려 주세요.</p>
-        <p className="mt-2 text-xs leading-relaxed text-muted">
+        <p className="mt-4 rounded-lg bg-[#fff4d6] px-3 py-2 text-sm font-semibold text-[#7a5600]">
+          주민번호·연락처·계좌는 가리고 올려 주세요. 법률 자문이 아닌 확인 체크리스트예요.
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-ink">
           사진은 분석을 위해 Anthropic API로 보내요. 이 앱은 사진과 결과를 저장하지 않아요. Anthropic은 받은 내용을 AI 학습에 쓰지 않고 30일 안에 지워요. 단, 안전
           점검에 걸리면 최대 2년, 법에 따라 필요하면 더 오래 보관될 수 있어요.
         </p>

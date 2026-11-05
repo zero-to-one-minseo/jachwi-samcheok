@@ -175,7 +175,6 @@ function Questions({ questions }: { questions: string[] }) {
           </li>
         ))}
       </ol>
-      <p className="mt-3 text-xs text-muted">보내기는 직접 하세요. 집주인의 답은 문자 등 기록으로 받아 두세요.</p>
     </section>
   );
 }
@@ -263,7 +262,7 @@ export default function ReportView({ report, meta, photoUrl }: { report: Report;
           </ul>
         </details>
       )}
-      <p className="text-xs text-muted">{footerText(meta)}</p>
+      <p className="text-sm font-semibold text-sea">근거: 검증한 확인 기준 · 주택임대차보호법 등 법령 · {footerText(meta)}</p>
     </div>
   );
 }

@@ -106,9 +106,7 @@ function ResultCard({ r }: { r: Result }) {
           <span key={c} className="rounded-md border border-line px-1.5 py-0.5 text-xs text-ink">{c}</span>
         ))}
       </div>
-      <p className="text-xs text-muted">
-        비교는 국토교통부 전월세 실거래(삼척, 2023.11~2026.11)와 팀이 직접 조사한 학생 방으로 코드가 계산해요. AI는 글을 읽기만 해요.
-      </p>
+      <p className="text-sm font-semibold text-sea">출처: 국토교통부 전월세 실거래(삼척, 2023.11~2026.11) · 건축물대장 · 학생 조사</p>
     </div>
   );
 }
@@ -164,9 +162,6 @@ export default function ChatApp() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6 md:h-[calc(100dvh-56px)]">
       <h1 className="text-2xl font-extrabold tracking-tight text-ink">매물 비교</h1>
-      <p className="mt-1 text-[15px] leading-relaxed text-muted">
-        다른 곳에서 본 방 글을 붙여넣거나 캡처를 올리면, 국토부 실거래 3년치와 학생 조사로 비싼지 알려 줘요.
-      </p>
 
       <div className="mt-4 flex-1 space-y-4 md:min-h-0 md:overflow-y-auto">
         {msgs.length === 0 && (
@@ -243,7 +238,7 @@ export default function ChatApp() {
         </div>
         {note && <p className="mt-2 text-sm text-[#cf5f1f]">{note}</p>}
       </div>
-      <p className="mt-2 text-xs text-muted">전화번호·계좌는 AI가 옮기지 않아요. 올린 글과 사진은 저장하지 않아요.</p>
+      <p className="mt-2 text-xs text-ink">전화번호·계좌는 AI가 옮기지 않아요. 올린 글과 사진은 저장하지 않아요.</p>
     </main>
   );
 }
