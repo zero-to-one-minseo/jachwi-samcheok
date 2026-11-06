@@ -52,7 +52,6 @@ function EvidenceBody({ evidence, byCode }: { evidence: Evidence | null; byCode:
   return (
     <div className="space-y-2 text-sm leading-relaxed">
       <p>{evidence.basis}</p>
-      {evidence.limits && <p><b>이 근거가 말하지 않는 것:</b> {evidence.limits}</p>}
       {(evidence.source_name || evidence.source_link) && (
         <p><b>출처:</b> <Sources name={evidence.source_name} link={evidence.source_link} /></p>
       )}
