@@ -68,7 +68,7 @@ export async function pickFile(f: File | undefined) {
 export async function analyze(file: Prepared) {
   if (state.step === "running") return;
   if (usedCount() >= SESSION_CAP) {
-    set({ step: "error", message: `이 브라우저에서 분석은 ${SESSION_CAP}회까지예요. '샘플로 해 보기'로 결과 모양을 볼 수 있어요.`, retry: null });
+    set({ step: "error", message: `이 브라우저에서 분석은 ${SESSION_CAP}회까지예요. 새 창(시크릿 창)에서 다시 해 주세요.`, retry: null });
     return;
   }
   const started = Date.now();
@@ -103,13 +103,13 @@ export async function analyze(file: Prepared) {
   }
 }
 
-export async function showSample() {
+export async function loadDemo() {
   set({ step: "preparing" });
   try {
-    const data = (await (await fetch("/data/sample_report.json")).json()) as AnalyzeResponse;
-    if (data.ok) set({ step: "done", report: data.report, meta: data.meta, photoUrl: "/data/sample_a.jpg", elapsedS: null, seen: true });
+    const blob = await (await fetch("/data/demo_contract.jpg")).blob();
+    await pickFile(new File([blob], "demo_contract.jpg", { type: "image/jpeg" }));
   } catch {
-    set({ step: "error", message: "샘플을 불러오지 못했어요.", retry: null });
+    set({ step: "error", message: "예시 계약서를 불러오지 못했어요.", retry: null });
   }
 }
 

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import ReportView from "./ReportView";
 import type { Room } from "@/lib/rooms";
-import { analyze, markSeen, pickFile, SESSION_CAP, showSample, useCheckState, useElapsed, usedCount } from "@/lib/checkStore";
+import { analyze, markSeen, pickFile, SESSION_CAP, loadDemo, useCheckState, useElapsed, usedCount } from "@/lib/checkStore";
 
 export default function CheckApp({ rooms }: { rooms: Room[] }) {
   const params = useSearchParams();
@@ -79,9 +79,9 @@ export default function CheckApp({ rooms }: { rooms: Room[] }) {
           >
             {state.step === "running" ? `읽는 중 ${elapsed}초` : "확인하기"}
           </button>
-          <button type="button" disabled={busy} onClick={showSample}
+          <button type="button" disabled={busy} onClick={loadDemo}
             className="rounded-xl border border-line-strong px-5 py-3 text-[15px] font-semibold hover:border-ink disabled:opacity-50">
-            샘플로 해 보기
+            예시 계약서 넣기
           </button>
           <span suppressHydrationWarning className="text-xs text-muted">이 브라우저에서 남은 분석 {Math.max(0, SESSION_CAP - used)}회</span>
         </div>
